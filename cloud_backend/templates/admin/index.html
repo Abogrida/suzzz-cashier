@@ -9,6 +9,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="/static/css/tailwind.js"></script>
 
+    <!-- Cloud View Auto-Auth -->
+    <script>
+        // Automatically authenticate for the read-only cloud view
+        if (!sessionStorage.getItem('authenticated')) {
+            console.log('Auto-authenticating for Cloud View...');
+            sessionStorage.setItem('authenticated', 'true');
+            sessionStorage.setItem('pageType', 'admin');
+        }
+    </script>
+
     <style>
         @font-face {
             font-family: 'Cairo';
