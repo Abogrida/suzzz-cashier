@@ -6,6 +6,10 @@ import uvicorn
 from contextlib import asynccontextmanager
 from database import init_db, get_db, SyncOrder, SyncInvoice, SyncShift
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
+
+# Load secret from .env if it exists
+load_dotenv()
 
 # Secret key for simple authentication
 SYNC_SECRET = os.environ.get("SYNC_SECRET", "change_me_to_secure_secret")

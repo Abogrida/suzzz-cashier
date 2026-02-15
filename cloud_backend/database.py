@@ -2,6 +2,10 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+from dotenv import load_dotenv
+
+# Load secret from .env if it exists
+load_dotenv()
 
 # Use SQLite for simplicity in this demo, but easy to switch to Postgres
 # DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://user:password@localhost/dbname")
