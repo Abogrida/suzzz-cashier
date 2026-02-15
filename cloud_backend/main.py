@@ -210,11 +210,52 @@ def get_orders(limit: int = 50, db: Session = Depends(get_db)):
         } for o in orders[:limit]
     ]
 
-# Reports endpoints (mock or simple implementation)
+# --- Reports APIs (Mock/Simple) ---
+
 @app.get("/api/reports/daily")
-def get_daily_report(date: str = None, db: Session = Depends(get_db)):
-    # Returns empty for now to avoid crash, or implement simple filtering
-    return {"orders": [], "summary": {"total_revenue": 0}}
+def get_daily_report(report_date: str = None, db: Session = Depends(get_db)):
+    # Simple aggregation for the given date
+    if not report_date:
+        report_date = datetime.date.today().isoformat()
+        
+    orders = db.query(SyncOrder).filter(SyncOrder.created_at.startswith(report_date)).all()
+    
+    total_sales = sum(float(o.total_amount or 0) for o in orders if o.status != 'cancelled')
+    order_count = len(orders)
+    
+    # Best sellers would require parsing item JSON, skipping for now
+    
+    return {
+        "total_sales": total_sales,
+        "order_count": order_count,
+        "best_sellers": [] 
+    }
+
+# --- Settings & Auth Stubs ---
+
+@app.get("/api/auth/passwords")
+def get_passwords():
+    # Return dummy or environment-configured passwords for cloud view
+    # In a real app, these should be secured or not exposed if not needed
+    return {
+        "admin_password": "cloud_admin_view_only", 
+        "cashier_password": "N/A"
+    }
+
+@app.get("/api/settings")
+def get_settings():
+    return {
+        "printer_ip": "",
+        "restaurant_name": "Suzz Cloud View",
+        "restaurant_address": "Online",
+        "footer_text": "Powered by Suzz System",
+        "playstation_price_per_hour": 0,
+        "playstation_price_multi": 0
+    }
+
+@app.get("/api/settings/discount_permission")
+def get_discount_permission():
+    return {"has_discount_permission": False}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=10000)
