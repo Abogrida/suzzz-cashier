@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from db import get_db
 
 # Configuration
-CLOUD_API_URL = "https://YOUR_RENDER_APP_URL.onrender.com" # Placeholder, will be updated by user
+CLOUD_API_URL = "https://suzz-cloud.onrender.com" # Updated after deployment
 SYNC_INTERVAL = 10 # Seconds
 BATCH_SIZE = 50
 
@@ -89,7 +89,7 @@ class SyncAgent:
             # or rely on the endpoint being open/protected by a shared secret key in headers
             headers = {
                 "Content-Type": "application/json",
-                "X-Sync-Secret": "change_me_to_secure_secret" 
+                "X-Sync-Secret": "my_secure_password_123" 
             }
             
             # We assume the cloud URL is configured in settings or hardcoded for now

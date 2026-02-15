@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - دوار العمده</title>
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="/static/css/tailwind.js"></script>
+
+    <style>
+        @font-face {
+            font-family: 'Cairo';
+            src: url('/static/fonts/Cairo-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Cairo';
+            src: url('/static/fonts/Cairo-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        * {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            /* Performance optimizations */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* Prevent accidental text selection on touch devices */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            /* Improve touch response */
+            touch-action: manipulation;
+        }
+
+        /* Allow text selection in inputs */
+        input,
+        textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        /* Larger touch targets for buttons */
+        button {
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        img {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            /* Prevent image dragging */
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+        }
+
+        body {
+            background: #f5f7fa;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-card {
+            will-change: transform, box-shadow;
+            transform: translateZ(0);
+        }
+
+        .dashboard-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px) translateZ(0);
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card {
+            will-change: transform, box-shadow;
+            transform: translateZ(0);
+        }
+
+        .stat-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px) translateZ(0);
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+
+        .stat-card.blue {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-color: #bfdbfe;
+        }
+
+        .stat-card.blue .stat-value {
+            color: #2563eb;
+        }
+
+        .stat-card.blue .stat-label {
+            color: #64748b;
+        }
+
+        .stat-card.green {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-color: #bbf7d0;
+        }
+
+        .stat-card.green .stat-value {
+            color: #16a34a;
+        }
+
+        .stat-card.green .stat-label {
+            color: #64748b;
+        }
+
+        .stat-card.orange {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border-color: #fed7aa;
+        }
+
+        .stat-card.orange .stat-value {
+            color: #ea580c;
+        }
+
+        .stat-card.orange .stat-label {
+            color: #64748b;
+        }
+
+        .stat-card.purple {
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+            border-color: #e9d5ff;
+        }
+
+        .stat-card.purple .stat-value {
+            color: #9333ea;
+        }
+
+        .stat-card.purple .stat-label {
+            color: #64748b;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .product-card {
+            will-change: transform, box-shadow;
+            transform: translateZ(0);
+        }
+
+        .product-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px) translateZ(0);
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+
+        .category-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            will-change: transform;
+            transform: translateZ(0);
+        }
+
+        .category-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <!-- Print Options Modal -->
+    <div id="printOptionsModal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm">
+            <h3 class="text-xl font-bold mb-6 text-center text-gray-800">خيارات الطباعة</h3>
+
+            <div class="space-y-4">
+                <button id="printCheckBtn"
+                    class="w-full flex items-center justify-center gap-3 px-4 py-4 bg-yellow-50 text-yellow-700 border-2 border-yellow-200 rounded-lg hover:bg-yellow-100 font-bold text-lg transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    فاتورة الطلب
+                </button>
+
+                <button id="printInvoiceBtn"
+                    class="w-full flex items-center justify-center gap-3 px-4 py-4 bg-green-50 text-green-700 border-2 border-green-200 rounded-lg hover:bg-green-100 font-bold text-lg transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    فاتورة الإنهاء
+                </button>
+            </div>
+
+            <button onclick="document.getElementById('printOptionsModal').classList.add('hidden')"
+                class="mt-6 w-full py-2 text-gray-500 hover:text-gray-700 font-semibold">
+                إلغاء
+            </button>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrCodeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm">
+            <h3 class="text-xl font-bold mb-4 text-center text-gray-800" id="qrModalTitle">QR Code</h3>
+
+            <div class="flex flex-col items-center">
+                <!-- QR Code Container -->
+                <div id="qrCodeContainer" class="bg-white p-4 rounded-lg border-2 border-gray-200 mb-4"></div>
+
+                <!-- URL Display -->
+                <div class="w-full bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4">
+                    <p class="text-xs text-gray-500 mb-1 text-center">الرابط:</p>
+                    <p class="text-sm font-mono text-gray-700 break-all text-center" id="qrUrlDisplay" dir="ltr"></p>
+                </div>
+
+                <p class="text-xs text-gray-500 text-center mb-4">
+                    امسح الكود بالكاميرا للدخول مباشرة
+                </p>
+            </div>
+
+            <button onclick="closeQRModal()"
+                class="w-full py-2 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 font-semibold transition">
+                إغلاق
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <!-- Main Content -->
+    <div id="mainContent" class="hidden">
+        <!-- Header -->
+        <div class="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-4 mb-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex-1">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">لوحة التحكم</h1>
+                    <p class="text-gray-600 mt-1 text-sm sm:text-base">دوار العمده - نظام إدارة المطعم</p>
+                    <!-- Network Info -->
+                    <div id="networkInfo" class="mt-2 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                        <span class="text-gray-500">جاري التحميل...</span>
+                    </div>
+                </div>
+                <button onclick="logout()"
+                    class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-red-50 border-2 border-red-200 text-red-700 rounded-lg hover:bg-red-100 hover:border-red-300 font-semibold transition text-sm sm:text-base">
+                    تسجيل الخروج
+                </button>
+            </div>
+        </div>
+
+        <div class="container mx-auto px-3 sm:px-6 pb-8">
+            <!-- Tabs Navigation -->
+            <div class="flex flex-wrap gap-2 mb-6 bg-white rounded-lg shadow-sm p-2">
+                <button id="statisticsTab"
+                    class="tab-btn px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition bg-blue-50 border-2 border-blue-200 text-blue-700 text-sm sm:text-base">
+                    📊 الإحصائيات
+                </button>
+                <button id="categoriesTab"
+                    class="tab-btn px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition text-gray-700 hover:bg-gray-50 border-2 border-transparent hover:border-gray-200 text-sm sm:text-base">
+                    📁 الفئات
+                </button>
+                <button id="productsTab"
+                    class="tab-btn px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition text-gray-700 hover:bg-gray-50 border-2 border-transparent hover:border-gray-200 text-sm sm:text-base">
+                    🛍️ المنتجات
+                </button>
+                <button id="reportsTab"
+                    class="tab-btn px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition text-gray-700 hover:bg-gray-50 border-2 border-transparent hover:border-gray-200 text-sm sm:text-base">
+                    📈 التقارير
+                </button>
+                <button id="ordersTab"
+                    class="tab-btn px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition text-gray-700 hover:bg-gray-50 border-2 border-transparent hover:border-gray-200 text-sm sm:text-base">
+                    📋 الطلبات
+                </button>
+                <button id="settingsTab"
+                    class="tab-btn px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition text-gray-700 hover:bg-gray-50 border-2 border-transparent hover:border-gray-200 text-sm sm:text-base">
+                    ⚙️ الإعدادات
+                </button>
+                <button id="shiftsTab"
+                    class="tab-btn px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition text-gray-700 hover:bg-gray-50 border-2 border-transparent hover:border-gray-200 text-sm sm:text-base">
+                    🕐 الشيفتات
+                </button>
+                <button id="backupTab"
+                    class="tab-btn px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition text-gray-700 hover:bg-gray-50 border-2 border-transparent hover:border-gray-200 text-sm sm:text-base">
+                    💾 النسخ الاحتياطي
+                </button>
+            </div>
+
+            <!-- Statistics Section -->
+            <div id="statisticsSection" class="tab-content">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="stat-card blue">
+                        <div class="relative z-10">
+                            <div class="text-sm stat-label mb-2 font-semibold">مبيعات اليوم</div>
+                            <div class="text-4xl font-bold mb-1 stat-value" id="todaySales">0.00</div>
+                            <div class="text-sm stat-label" id="todayOrders">0 طلب</div>
+                        </div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="relative z-10">
+                            <div class="text-sm stat-label mb-2 font-semibold">إجمالي المبيعات</div>
+                            <div class="text-4xl font-bold mb-1 stat-value" id="totalRevenue">0.00</div>
+                            <div class="text-sm stat-label" id="totalOrders">0 طلب</div>
+                        </div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="relative z-10">
+                            <div class="text-sm stat-label mb-2 font-semibold">طلبات قيد الانتظار</div>
+                            <div class="text-4xl font-bold mb-1 stat-value" id="pendingOrders">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="relative z-10">
+                            <div class="text-sm stat-label mb-2 font-semibold">المنتجات</div>
+                            <div class="text-4xl font-bold mb-1 stat-value" id="totalProducts">0</div>
+                            <div class="text-sm stat-label" id="totalCategories">0 فئة</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders & Top Products -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="dashboard-card p-6">
+                        <h2 class="text-xl font-bold mb-4 text-gray-800">الطلبات الأخيرة</h2>
+                        <div id="recentOrdersCards" class="space-y-3">
+                            <div class="text-center py-8 text-gray-400">جاري التحميل...</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card p-6">
+                        <h2 class="text-xl font-bold mb-4 text-gray-800">أفضل المنتجات</h2>
+                        <div id="topProductsCards" class="space-y-3">
+                            <div class="text-center py-8 text-gray-400">جاري التحميل...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Section -->
+            <div id="categoriesSection" class="tab-content hidden">
+                <div class="dashboard-card p-6 mb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">إدارة الفئات</h2>
+                        <button id="addCategoryBtn"
+                            class="px-6 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition">
+                            + إضافة فئة
+                        </button>
+                    </div>
+                    <div id="categoriesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="text-center py-8 text-gray-400">جاري التحميل...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div id="productsSection" class="tab-content hidden">
+                <div class="dashboard-card p-6 mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">إدارة المنتجات</h2>
+                        <button id="addProductBtn"
+                            class="px-6 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition">
+                            + إضافة منتج
+                        </button>
+                    </div>
+                    <!-- Search Bar -->
+                    <div class="mb-6">
+                        <div class="relative">
+                            <input type="text" id="productSearchInput" placeholder="ابحث عن منتج بالاسم..."
+                                class="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg">
+                            <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div class="text-center py-8 text-gray-400">جاري التحميل...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reportsSection" class="tab-content hidden">
+                <div class="dashboard-card p-6">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">التقارير</h2>
+
+                    <!-- Report Type Selection -->
+                    <div class="mb-6 flex flex-wrap gap-3">
+                        <button id="dailyReportBtn"
+                            class="px-6 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition">
+                            📅 تقرير يومي
+                        </button>
+                        <button id="weeklyReportBtn"
+                            class="px-6 py-3 bg-gray-50 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 hover:border-gray-300 font-semibold transition">
+                            📆 تقرير أسبوعي
+                        </button>
+                        <button id="monthlyReportBtn"
+                            class="px-6 py-3 bg-gray-50 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 hover:border-gray-300 font-semibold transition">
+                            📊 تقرير شهري
+                        </button>
+                        <button id="detailedReportBtn"
+                            class="px-6 py-3 bg-purple-50 border-2 border-purple-200 text-purple-700 rounded-lg hover:bg-purple-100 hover:border-purple-300 font-semibold transition">
+                            📑 تقرير مفصل
+                        </button>
+                    </div>
+
+                    <!-- Daily Report -->
+                    <div id="dailyReportSection" class="report-section">
+                        <div class="mb-4 flex gap-3 items-center">
+                            <input type="date" id="reportDate"
+                                class="px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-400">
+                            <button id="loadDailyReportBtn"
+                                class="px-6 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition">
+                                تحميل التقرير
+                            </button>
+                        </div>
+                        <div id="dailyReportContent"></div>
+                    </div>
+
+                    <!-- Weekly Report -->
+                    <div id="weeklyReportSection" class="report-section hidden">
+                        <div class="mb-4 flex gap-3 items-center">
+                            <input type="week" id="reportWeek"
+                                class="px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-400">
+                            <button id="loadWeeklyReportBtn"
+                                class="px-6 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition">
+                                تحميل التقرير
+                            </button>
+                        </div>
+                        <div id="weeklyReportContent"></div>
+                    </div>
+
+                    <!-- Monthly Report -->
+                    <div id="monthlyReportSection" class="report-section hidden">
+                        <div class="mb-4 flex gap-3 items-center">
+                            <input type="month" id="reportMonth"
+                                class="px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-400">
+                            <button id="loadMonthlyReportBtn"
+                                class="px-6 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition">
+                                تحميل التقرير
+                            </button>
+                        </div>
+                        <div id="monthlyReportContent"></div>
+                    </div>
+
+                    <!-- Detailed Report -->
+                    <div id="detailedReportSection" class="report-section hidden">
+                        <!-- Date Range Search -->
+                        <div class="mb-6 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <h3 class="font-bold text-lg mb-4 text-gray-700">تحديد الفترة</h3>
+                            <div class="flex flex-wrap gap-4 items-end">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">من تاريخ</label>
+                                    <input type="date" id="detailedStartDate"
+                                        class="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-400 w-48">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">إلى تاريخ</label>
+                                    <input type="date" id="detailedEndDate"
+                                        class="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-400 w-48">
+                                </div>
+                                <button id="searchDetailedReportBtn"
+                                    class="px-8 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold shadow-md transition flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    بحث
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+                            <!-- Revenue -->
+                            <div class="stat-card p-4 rounded-xl border-l-4 border-blue-500 bg-blue-50">
+                                <div class="text-sm font-semibold text-blue-700 mb-1">إجمالي الإيرادات</div>
+                                <div class="text-2xl font-bold text-blue-900" id="detailedRevenue">0.00</div>
+                            </div>
+                            <!-- Cash -->
+                            <div class="stat-card p-4 rounded-xl border-l-4 border-green-500 bg-green-50">
+                                <div class="text-sm font-semibold text-green-700 mb-1">نقدية</div>
+                                <div class="text-2xl font-bold text-green-900" id="detailedCash">0.00</div>
+                            </div>
+                            <!-- Card -->
+                            <div class="stat-card p-4 rounded-xl border-l-4 border-indigo-500 bg-indigo-50">
+                                <div class="text-sm font-semibold text-indigo-700 mb-1">بطاقة</div>
+                                <div class="text-2xl font-bold text-indigo-900" id="detailedCard">0.00</div>
+                            </div>
+                            <!-- Surplus (Extra) -->
+                            <div class="stat-card p-4 rounded-xl border-l-4 border-emerald-500 bg-emerald-50">
+                                <div class="text-sm font-semibold text-emerald-700 mb-1">زيادة (عجز موجب)</div>
+                                <div class="text-2xl font-bold text-emerald-900" id="detailedSurplus">0.00</div>
+                            </div>
+                            <!-- Deficit -->
+                            <div class="stat-card p-4 rounded-xl border-l-4 border-red-500 bg-red-50">
+                                <div class="text-sm font-semibold text-red-700 mb-1">عجز</div>
+                                <div class="text-2xl font-bold text-red-900" id="detailedDeficit">0.00</div>
+                            </div>
+                        </div>
+
+                        <!-- Orders Table (Cloned Structure) -->
+                        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                            <div
+                                class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                                <h3 class="font-bold text-gray-700">تفاصيل الطلبات</h3>
+                                <span class="bg-purple-100 text-purple-800 py-1 px-3 rounded-full text-sm font-medium"
+                                    id="detailedOrdersCount">0 طلب</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left rtl:text-right text-gray-500">
+                                    <thead class="text-xs text-gray-700 uppercase bg-gray-100 font-bold">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-3 text-right">#</th>
+                                            <th scope="col" class="px-4 py-3 text-right">رقم الطلب</th>
+                                            <th scope="col" class="px-4 py-3 text-right">الطاولة</th>
+                                            <th scope="col" class="px-4 py-3 text-right">العميل</th>
+                                            <th scope="col" class="px-4 py-3 text-right">الهاتف</th>
+                                            <th scope="col" class="px-4 py-3 text-right">الكمية</th>
+                                            <th scope="col" class="px-4 py-3 text-right">الاجمالي</th>
+                                            <th scope="col" class="px-4 py-3 text-right">خصم</th>
+                                            <th scope="col" class="px-4 py-3 text-right">ضريبة</th>
+                                            <th scope="col" class="px-4 py-3 text-right">خدمة</th>
+                                            <th scope="col" class="px-4 py-3 text-right">حالة الطلب</th>
+                                            <th scope="col" class="px-4 py-3 text-right">الفرع</th>
+                                            <th scope="col" class="px-4 py-3 text-right">الكاشير</th>
+                                            <th scope="col" class="px-4 py-3 text-right">الوقت</th>
+                                            <th scope="col" class="px-4 py-3 text-right">إجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="detailedReportsTableBody">
+                                        <!-- Orders will be injected here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- Pagination if needed, or loading spinner -->
+                            <div id="detailedReportsLoading" class="hidden p-8 text-center text-gray-500">
+                                <div
+                                    class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent">
+                                </div>
+                                <div class="mt-2">جاري تحميل البيانات...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Orders Section -->
+            <div id="ordersSection" class="tab-content hidden">
+                <div class="dashboard-card p-6 mb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">تقرير الطلبات</h2>
+                        <div class="flex gap-2">
+                            <button class="p-2 hover:bg-gray-100 rounded-lg transition">
+                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button id="printOrdersBtn" class="p-2 hover:bg-gray-100 rounded-lg transition">
+                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Date Range Filter -->
+                    <div class="mb-4 flex items-center gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="searchOrdersByTimeCheckbox"
+                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="text-gray-700 font-semibold">بحث بالوقت</span>
+                        </label>
+                        <div class="flex items-center gap-2" id="ordersDateRangeContainer" style="display: none;">
+                            <label class="text-gray-700 font-semibold">من:</label>
+                            <input type="date" id="orderStartDate"
+                                class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <label class="text-gray-700 font-semibold">إلى:</label>
+                            <input type="date" id="orderEndDate"
+                                class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Search/Filter Fields -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+                        <input type="text" id="filterOrderNumberForOrders" placeholder="رقم الطلب"
+                            class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <input type="text" id="filterOrderCustomerName" placeholder="الاسم"
+                            class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <input type="text" id="filterOrderCustomerPhone" placeholder="الهاتف"
+                            class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <input type="text" id="filterOrderTableNumber" placeholder="رقم الطاولة"
+                            class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <select id="filterOrderBranch"
+                            class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="">الفرع</option>
+                            <option value="الفرع الرئيسي">الفرع الرئيسي</option>
+                        </select>
+                        <select id="filterOrderStatus"
+                            class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="">الحالة</option>
+                            <option value="pending">قيد الانتظار</option>
+                            <option value="completed">مكتمل</option>
+                            <option value="cancelled">ملغي</option>
+                        </select>
+                        <div class="flex gap-2">
+                            <select id="filterOrderCashier"
+                                class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                <option value="">الكاشير</option>
+                            </select>
+                            <button id="searchOrdersBtn"
+                                class="px-4 py-2 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                بحث
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders Table -->
+                <div class="dashboard-card p-3 sm:p-6">
+                    <div class="overflow-x-auto -mx-3 sm:mx-0">
+                        <table class="w-full border-collapse min-w-[1000px]">
+                            <thead>
+                                <tr class="bg-gray-100 border-b-2 border-gray-300">
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">#
+                                    </th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">رقم
+                                        الطلب</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">رقم
+                                        الطاولة</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        العميل</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        الهاتف</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        الكمية</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        المبلغ الإجمالي</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        الخصم</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        الضريبة</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">ق.م
+                                    </th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        الحالة</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        الفرع</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        الكاشير</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        التاريخ والوقت</th>
+                                    <th class="px-4 py-3 text-right font-bold text-gray-700 border border-gray-300">
+                                        تفاصيل</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <tr>
+                                    <td colspan="15" class="text-center py-8 text-gray-400">لا توجد طلبات</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex justify-center items-center gap-2" id="ordersPagination">
+                        <!-- Pagination will be added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settingsSection" class="tab-content hidden">
+                <div class="dashboard-card p-6">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">الإعدادات</h2>
+                    <div class="space-y-6 max-w-2xl">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">كلمة مرور الإدارة</label>
+                            <input type="password" id="adminPassword"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">كلمة مرور الكاشير</label>
+                            <input type="password" id="cashierPassword"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">اختيار الطابعة</label>
+                            <div class="flex gap-2">
+                                <select id="printerSelect"
+                                    class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                    <option value="">جاري التحميل...</option>
+                                </select>
+                                <button type="button" id="refreshPrintersBtn"
+                                    class="px-4 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition"
+                                    title="تحديث قائمة الطابعات">
+                                    🔄
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">اختر الطابعة التي تريد الطباعة عليها. إذا لم تختر،
+                                سيتم الطباعة على الطابعة الافتراضية.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">سعر ساعة البلايستيشن
+                                (فردي)</label>
+                            <input type="number" id="playstationPrice" placeholder="50" step="0.5"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">سعر ساعة البلايستيشن
+                                (مالتي)</label>
+                            <input type="number" id="playstationPriceMulti" placeholder="70" step="0.5"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div class="flex items-center gap-3 p-4 bg-purple-50 rounded-lg border-2 border-purple-100">
+                            <input type="checkbox" id="playstationEnabledCheckbox"
+                                class="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                            <label for="playstationEnabledCheckbox"
+                                class="text-sm font-semibold text-gray-700 cursor-pointer">
+                                تشغيل نظام البلايستيشن
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                            <input type="checkbox" id="discountPermissionCheckbox"
+                                class="w-5 h-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                            <label for="discountPermissionCheckbox"
+                                class="text-sm font-semibold text-gray-700 cursor-pointer">
+                                السماح للكاشير بإعطاء خصم
+                            </label>
+                        </div>
+                        <button id="saveSettingsBtn"
+                            class="px-8 py-4 bg-green-50 border-2 border-green-200 text-green-700 rounded-lg hover:bg-green-100 hover:border-green-300 font-semibold transition">
+                            حفظ الإعدادات
+                        </button>
+                    </div>
+
+                    <!-- Danger Zone -->
+                    <div class="bg-red-50 rounded-lg p-6 mt-8 border-2 border-red-100">
+                        <h3 class="text-lg font-bold text-red-800 mb-4 border-b border-red-200 pb-2">منطقة الخطر (Danger
+                            Zone)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-4 rounded-lg border border-red-100 shadow-sm">
+                                <h4 class="font-bold text-gray-800 mb-2">تصفير البيانات (Reset Data)</h4>
+                                <p class="text-sm text-gray-600 mb-4">
+                                    حذف جميع الطلبات والفواتير والشيفتات. <br>
+                                    <span class="font-bold text-green-600">يتم الاحتفاظ بالمنيو والإعدادات.</span>
+                                </p>
+                                <button onclick="handleResetData()"
+                                    class="w-full bg-yellow-500 text-white font-bold py-2 px-4 rounded hover:bg-yellow-600 transition">
+                                    تصفير البيانات فقط
+                                </button>
+                            </div>
+
+                            <div class="bg-white p-4 rounded-lg border border-red-100 shadow-sm">
+                                <h4 class="font-bold text-red-800 mb-2">إعادة ضبط المصنع (Factory Reset)</h4>
+                                <p class="text-sm text-gray-600 mb-4">
+                                    حذف <span class="font-bold text-red-600">كل شيء</span> بما في ذلك المنيو والمنتجات.
+                                    <br>
+                                    يعود النظام كأنه جديد.
+                                </p>
+                                <button onclick="handleFactoryReset()"
+                                    class="w-full bg-red-600 text-white font-bold py-2 px-4 rounded hover:bg-red-700 transition">
+                                    حذف الكل (ضبط مصنع)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receipt Settings (Owner Only) -->
+                <div id="receiptSettingsCard" class="dashboard-card p-6 mt-6 hidden">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">إعدادات الفاتورة (للمالك فقط)</h2>
+                    <div class="space-y-6 max-w-2xl">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">اسم المطعم</label>
+                            <input type="text" id="restaurantName" placeholder="دوار العمده"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">العنوان / سطر إضافي</label>
+                            <input type="text" id="restaurantAddress" placeholder="العنوان"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">نص الفوتر</label>
+                            <input type="text" id="footerText" placeholder="Powered by..."
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">لوجو الفاتورة</label>
+                            <div class="flex items-center gap-4">
+                                <input type="file" id="logoInput" accept="image/*"
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                <button id="uploadLogoBtn"
+                                    class="px-6 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition">
+                                    رفع
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">يفضل صورة بخلفية شفافة أو بيضاء (PNG/JPG)</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">كلمة مرور المالك</label>
+                            <input type="password" id="ownerPassword"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <button id="saveReceiptSettingsBtn"
+                            class="px-8 py-4 bg-green-50 border-2 border-green-200 text-green-700 rounded-lg hover:bg-green-100 hover:border-green-300 font-semibold transition">
+                            حفظ إعدادات الفاتورة
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shifts Section -->
+            <div id="shiftsSection" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Shift Settings -->
+                    <div class="dashboard-card p-6">
+                        <h2 class="text-2xl font-bold mb-6 text-gray-800">إعدادات الشيفتات</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2 text-gray-700">عدد الشيفتات</label>
+                                <select id="numberOfShifts"
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                    <option value="2">2 شيفتات</option>
+                                    <option value="3">3 شيفتات</option>
+                                </select>
+                            </div>
+
+
+
+                            <!-- Save Button -->
+
+                            <!-- Scripts -->
+                            <div class="border-2 border-gray-200 rounded-lg p-4 bg-blue-50">
+                                <h3 class="font-bold text-gray-800 mb-3">الشيفت الأول</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-1 text-gray-700">اسم الشيفت</label>
+                                        <input type="text" id="shift1Name" placeholder="صباحي"
+                                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-sm font-semibold mb-1 text-gray-700">وقت
+                                                البداية</label>
+                                            <input type="time" id="shift1StartTime"
+                                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold mb-1 text-gray-700">وقت
+                                                النهاية</label>
+                                            <input type="time" id="shift1EndTime"
+                                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Shift 2 -->
+                            <div class="border-2 border-gray-200 rounded-lg p-4 bg-purple-50">
+                                <h3 class="font-bold text-gray-800 mb-3">الشيفت الثاني</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-1 text-gray-700">اسم الشيفت</label>
+                                        <input type="text" id="shift2Name" placeholder="مسائي"
+                                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-sm font-semibold mb-1 text-gray-700">وقت
+                                                البداية</label>
+                                            <input type="time" id="shift2StartTime"
+                                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold mb-1 text-gray-700">وقت
+                                                النهاية</label>
+                                            <input type="time" id="shift2EndTime"
+                                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Shift 3 (hidden by default) -->
+                            <div id="shift3Section" class="hidden border-2 border-gray-200 rounded-lg p-4 bg-green-50">
+                                <h3 class="font-bold text-gray-800 mb-3">الشيفت الثالث</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-1 text-gray-700">اسم الشيفت</label>
+                                        <input type="text" id="shift3Name" placeholder="ليلي"
+                                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-sm font-semibold mb-1 text-gray-700">وقت
+                                                البداية</label>
+                                            <input type="time" id="shift3StartTime"
+                                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold mb-1 text-gray-700">وقت
+                                                النهاية</label>
+                                            <input type="time" id="shift3EndTime"
+                                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button id="saveShiftSettingsBtn"
+                                class="w-full px-8 py-4 bg-green-50 border-2 border-green-200 text-green-700 rounded-lg hover:bg-green-100 hover:border-green-300 font-semibold transition">
+                                حفظ إعدادات الشيفتات
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Shift Reports -->
+                    <div class="dashboard-card p-6">
+                        <h2 class="text-2xl font-bold mb-6 text-gray-800">تقارير الشيفتات</h2>
+                        <div class="space-y-4">
+                            <div class="flex gap-2">
+                                <input type="date" id="shiftReportDate"
+                                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                <button id="loadShiftReportBtn"
+                                    class="px-6 py-2 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition">
+                                    تحميل
+                                </button>
+                            </div>
+                            <div id="shiftsReportList" class="space-y-3 max-h-96 overflow-y-auto">
+                                <div class="text-center text-gray-400 py-8">اختر تاريخ لعرض التقارير</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup Section -->
+            <div id="backupSection" class="tab-content hidden">
+                <div class="dashboard-card p-6">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">النسخ الاحتياطي والاستعادة</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Download Backup -->
+                        <div class="border-2 border-blue-200 rounded-xl p-6 bg-blue-50">
+                            <h3 class="text-xl font-bold text-blue-800 mb-4">تحميل نسخة احتياطية</h3>
+                            <p class="text-gray-600 mb-6">قم بتحميل نسخة كاملة من قاعدة البيانات الحالية للاحتفاظ بها.
+                            </p>
+                            <button id="downloadBackupBtn"
+                                class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition flex items-center justify-center gap-2 mb-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                تحميل نسخة كاملة
+                            </button>
+                            <button id="downloadMenuBackupBtn"
+                                class="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold transition flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                                    </path>
+                                </svg>
+                                تحميل نسخة المنيو فقط
+                            </button>
+                        </div>
+
+                        <!-- Restore Menu -->
+                        <div class="border-2 border-green-200 rounded-xl p-6 bg-green-50">
+                            <h3 class="text-xl font-bold text-green-800 mb-4">استعادة القائمة فقط</h3>
+                            <p class="text-gray-600 mb-6">استعادة الفئات والمنتجات من ملف قاعدة بيانات قديم (مع الحفاظ
+                                على الفواتير والطلبات الحالية).</p>
+                            <input type="file" id="restoreMenuInput" accept=".db" class="hidden">
+                            <button onclick="document.getElementById('restoreMenuInput').click()"
+                                class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                    </path>
+                                </svg>
+                                استعادة القائمة
+                            </button>
+                        </div>
+
+                        <!-- Restore Full -->
+                        <div class="border-2 border-red-200 rounded-xl p-6 bg-red-50 md:col-span-2">
+                            <h3 class="text-xl font-bold text-red-800 mb-4">استعادة كاملة (تحذير!)</h3>
+                            <p class="text-gray-600 mb-6">استبدال قاعدة البيانات الحالية تماماً بنسخة قديمة. سيتم حذف
+                                جميع البيانات الحالية.</p>
+                            <input type="file" id="restoreFullInput" accept=".db,.zip" class="hidden">
+                            <button
+                                onclick="if(confirm('هل أنت متأكد تماماً؟ سيتم حذف جميع البيانات الحالية واستبدالها بالنسخة الاحتياطية.')) document.getElementById('restoreFullInput').click()"
+                                class="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold transition flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                    </path>
+                                </svg>
+                                استعادة كاملة للنظام
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div id="categoryModal"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800" id="categoryModalTitle">إضافة فئة</h2>
+                <input type="text" id="categoryNameInput" placeholder="اسم الفئة"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-blue-500">
+                <div class="flex gap-2">
+                    <button id="saveCategoryBtn"
+                        class="flex-1 px-4 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition">
+                        حفظ
+                    </button>
+                    <button onclick="closeCategoryModal()"
+                        class="flex-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 hover:border-gray-300 font-semibold transition">
+                        إلغاء
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="productModal"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-8 max-w-lg w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800" id="productModalTitle">إضافة منتج</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700">اسم المنتج</label>
+                        <input type="text" id="productNameInput" placeholder="اسم المنتج"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700">السعر</label>
+                        <input type="number" id="productPriceInput" placeholder="السعر" step="0.01"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700">الفئة</label>
+                        <select id="productCategoryInput"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="">اختر الفئة</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700">صورة المنتج (اختياري)</label>
+                        <input type="file" id="productImageInput" accept="image/*"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <div id="imagePreview" class="mt-2 hidden relative w-32 h-32 group">
+                            <img id="previewImg" src="" alt="Preview"
+                                class="w-full h-full object-cover rounded-lg border border-gray-200">
+                            <button type="button" id="removeImageBtn" title="حذف الصورة"
+                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-md transition opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                        <input type="hidden" id="productImagePath" value="">
+                    </div>
+                    <div class="flex items-center mb-4">
+                        <input type="checkbox" id="productHasSizesInput" class="ml-2 w-5 h-5">
+                        <label for="productHasSizesInput" class="text-gray-700 font-semibold">يحتوي على أحجام (S, M,
+                            L)</label>
+                    </div>
+                    <div id="sizesSection" class="hidden space-y-3 mb-4">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1 text-gray-700">سعر S</label>
+                                <input type="number" id="productPriceSInput" step="0.01" placeholder="0.00"
+                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1 text-gray-700">سعر M</label>
+                                <input type="number" id="productPriceMInput" step="0.01" placeholder="0.00"
+                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1 text-gray-700">سعر L</label>
+                                <input type="number" id="productPriceLInput" step="0.01" placeholder="0.00"
+                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="productEnabledInput" checked class="ml-2 w-5 h-5">
+                        <label for="productEnabledInput" class="text-gray-700 font-semibold">مفعل</label>
+                    </div>
+                    <div class="flex items-center mt-2">
+                        <input type="checkbox" id="productHiddenOnTabletInput" class="ml-2 w-5 h-5">
+                        <label for="productHiddenOnTabletInput" class="text-gray-700 font-semibold">إخفاء من
+                            التابلت</label>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-6">
+                    <button id="saveProductBtn"
+                        class="flex-1 px-4 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 font-semibold transition">
+                        حفظ
+                    </button>
+                    <button onclick="closeProductModal()"
+                        class="flex-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 hover:border-gray-300 font-semibold transition">
+                        إلغاء
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Details Modal -->
+        <div id="orderDetailsModal"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+            <div class="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800">تفاصيل الطلب</h2>
+                    <button onclick="closeOrderDetailsModal()"
+                        class="text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
+                </div>
+                <div id="orderDetailsContent">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/js/performance.js"></script>
+        <script src="/static/js/notifications.js"></script>
+        <script src="/static/js/admin.js?v=5"></script>
+        <script>
+            // Receipt Settings Logic
+            document.addEventListener('DOMContentLoaded', () => {
+                // Load Settings Override
+                const originalLoadSettings = window.loadSettings || function () { };
+
+                // We need to hook into or replace the existing loadSettings if it exists in admin.js
+                // Or just run our own loader
+
+                async function loadReceiptSettings() {
+                    try {
+                        const response = await fetch('/api/settings');
+                        const settings = await response.json();
+
+                        // Receipt Settings (if owner)
+                        if (sessionStorage.getItem('role') === 'owner') {
+                            const card = document.getElementById('receiptSettingsCard');
+                            if (card) {
+                                card.classList.remove('hidden');
+                                document.getElementById('restaurantName').value = settings.restaurant_name || '';
+                                document.getElementById('restaurantAddress').value = settings.restaurant_address || '';
+                                document.getElementById('footerText').value = settings.footer_text || '';
+                                document.getElementById('ownerPassword').value = settings.owner_password || '';
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading receipt settings:', error);
+                    }
+                }
+
+                // Call it
+                loadReceiptSettings();
+
+                // Save Receipt Settings
+                document.getElementById('saveReceiptSettingsBtn')?.addEventListener('click', async () => {
+                    const settings = {
+                        restaurant_name: document.getElementById('restaurantName').value,
+                        restaurant_address: document.getElementById('restaurantAddress').value,
+                        footer_text: document.getElementById('footerText').value,
+                        owner_password: document.getElementById('ownerPassword').value
+                    };
+
+                    try {
+                        const response = await fetch('/api/settings', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(settings)
+                        });
+
+                        if (response.ok) {
+                            alert('تم حفظ إعدادات الفاتورة بنجاح');
+                        } else {
+                            alert('حدث خطأ أثناء حفظ الإعدادات');
+                        }
+                    } catch (error) {
+                        console.error('Error saving receipt settings:', error);
+                        alert('حدث خطأ أثناء حفظ الإعدادات');
+                    }
+                });
+
+                // Upload Logo
+                document.getElementById('uploadLogoBtn')?.addEventListener('click', async () => {
+                    const fileInput = document.getElementById('logoInput');
+                    if (fileInput.files.length === 0) {
+                        alert('الرجاء اختيار ملف صورة');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('file', fileInput.files[0]);
+
+                    try {
+                        const response = await fetch('/api/settings/logo', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            alert('تم رفع اللوجو بنجاح');
+                        } else {
+                            alert('حدث خطأ أثناء رفع اللوجو');
+                        }
+                    } catch (error) {
+                        console.error('Error uploading logo:', error);
+                        alert('حدث خطأ أثناء رفع اللوجو');
+                    }
+                });
+            });
+        </script>
+
+        <!-- FORCE BLOCK PDF DOWNLOADS - NO PDF FILES ALLOWED -->
+        <script>
+            // Block any PDF download attempts - FORCE BLOCK
+            (function () {
+                'use strict';
+
+                // Block window.open for PDF
+                const originalOpen = window.open;
+                window.open = function (url, target, features) {
+                    if (url && (url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('pdf') || url.toLowerCase().includes('download-pdf'))) {
+                        console.log('🚫 BLOCKED window.open for PDF:', url);
+                        return null;
+                    }
+                    return originalOpen.apply(this, arguments);
+                };
+
+                // Block fetch for PDF
+                const originalFetch = window.fetch;
+                window.fetch = function (url, options) {
+                    const urlStr = typeof url === 'string' ? url : (url && url.url ? url.url : '');
+                    if (urlStr && (urlStr.toLowerCase().includes('.pdf') || urlStr.toLowerCase().includes('download-pdf') || urlStr.toLowerCase().includes('/pdf'))) {
+                        console.log('🚫 BLOCKED fetch for PDF:', urlStr);
+                        return Promise.reject(new Error('PDF download blocked'));
+                    }
+                    return originalFetch.apply(this, arguments).then(response => {
+                        const contentType = response.headers.get('content-type') || '';
+                        if (contentType.toLowerCase().includes('application/pdf')) {
+                            console.log('🚫 BLOCKED PDF response:', urlStr);
+                            return Promise.reject(new Error('PDF response blocked'));
+                        }
+                        return response;
+                    }).catch(err => {
+                        if (err.message && err.message.includes('PDF')) {
+                            console.log('🚫 PDF blocked:', err.message);
+                        }
+                        throw err;
+                    });
+                };
+
+                // Block XMLHttpRequest for PDF
+                const originalXHROpen = XMLHttpRequest.prototype.open;
+                XMLHttpRequest.prototype.open = function (method, url, ...args) {
+                    if (url && (url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('pdf') || url.toLowerCase().includes('download-pdf'))) {
+                        console.log('🚫 BLOCKED XMLHttpRequest for PDF:', url);
+                        this.abort();
+                        return;
+                    }
+                    return originalXHROpen.apply(this, [method, url, ...args]);
+                };
+
+                // Block any click events on PDF links
+                document.addEventListener('click', function (e) {
+                    const target = e.target;
+                    const link = target.closest('a');
+                    if (link && (link.href.toLowerCase().includes('.pdf') || link.href.toLowerCase().includes('pdf') || link.href.toLowerCase().includes('download-pdf'))) {
+                        console.log('🚫 BLOCKED click on PDF link:', link.href);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+                }, true);
+
+                console.log('✅✅✅ PDF download blocker ACTIVATED - NO PDF FILES ALLOWED');
+            })();
+        </script>
+</body>
+
+</html>
