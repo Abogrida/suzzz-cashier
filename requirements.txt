@@ -1,0 +1,15 @@
+fastapi>=0.104.1
+uvicorn[standard]>=0.30.0
+websockets>=13.0
+pydantic>=2.9.0
+python-multipart>=0.0.12
+requests>=2.31.0
+reportlab>=4.0.0
+pywin32>=311; sys_platform == "win32"
+Pillow>=10.0.0
+# دعم العربية - ضروري للطباعة الصحيحة
+arabic-reshaper>=3.0.0
+python-bidi>=0.4.2
+python-escpos>=3.0a9
+PyQt6>=6.6.0
+PyQt6-WebEngine>=6.6.0

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>دوار العمده - تابلت</title>
+    <script src="/static/css/tailwind.js"></script>
+    <script src="/static/js/performance.js"></script>
+    <script src="/static/js/notifications.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Cairo';
+            src: url('/static/fonts/Cairo-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Cairo';
+            src: url('/static/fonts/Cairo-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        * {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+            min-height: 100vh;
+        }
+
+        .product-card {
+            will-change: transform, box-shadow;
+            transform: translateZ(0);
+        }
+
+        .product-card:hover {
+            transform: scale(1.03) translateZ(0);
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .bg-panel {
+            background: #f0f0f0;
+        }
+
+        @media (max-width: 768px) {
+            .product-card {
+                transform: none;
+            }
+
+            .product-card:active {
+                transform: scale(0.98);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mx-auto p-2 sm:p-4 max-w-7xl">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-4">
+            <!-- Left Panel - Order Summary -->
+            <div class="lg:col-span-1 order-2 lg:order-1">
+                <div
+                    class="bg-gradient-to-b from-gray-50 to-white rounded-xl shadow-lg border-2 border-gray-200 p-3 sm:p-5">
+                    <h2
+                        class="text-xl sm:text-2xl font-bold mb-3 sm:mb-5 text-gray-800 border-b-2 border-gray-300 pb-2 sm:pb-3">
+                        ملخص الطلب</h2>
+
+                    <!-- Table Number -->
+                    <div class="mb-3 sm:mb-4">
+                        <label class="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">
+                            رقم الطاولة *
+                        </label>
+                        <input type="number" id="tableNumber" value="" min="1"
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm sm:text-base font-semibold bg-white"
+                            placeholder="مثال: 5" required>
+                        <div id="tableStatus" class="mt-1 sm:mt-2 text-xs font-semibold hidden"></div>
+                    </div>
+
+                    <!-- Customer Name -->
+                    <div class="mb-3 sm:mb-4">
+                        <label class="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">
+                            اسم العميل
+                        </label>
+                        <input type="text" id="customerName"
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm sm:text-base bg-white"
+                            placeholder="اسم العميل (اختياري)">
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-3 sm:mb-4">
+                        <label class="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">
+                            ملاحظات
+                        </label>
+                        <textarea id="notes" rows="2" sm:rows="3"
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-xs sm:text-sm resize-none bg-white"
+                            placeholder="ملاحظات خاصة...."></textarea>
+                    </div>
+
+                    <!-- Selected Items -->
+                    <div class="border-t-2 border-gray-300 pt-3 sm:pt-4">
+                        <h3 class="text-sm sm:text-base font-bold mb-2 sm:mb-3 text-gray-800">العناصر المختارة</h3>
+                        <div id="selectedItems" class="space-y-2 mb-3 sm:mb-4 max-h-48 sm:max-h-64 overflow-y-auto">
+                            <div class="text-center text-gray-400 py-4 text-xs sm:text-sm">لا توجد عناصر في الطلب</div>
+                        </div>
+
+                        <div class="border-t-2 border-gray-300 pt-2 sm:pt-3">
+                            <div class="flex justify-between items-center mb-3 sm:mb-4">
+                                <span class="font-bold text-gray-700 text-sm sm:text-base">الإجمالي:</span>
+                                <span id="totalAmount" class="text-lg sm:text-xl font-bold text-teal-600">0.00</span>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <button id="additionsBtn"
+                                    class="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-white border-2 border-gray-300 rounded-lg text-xs sm:text-sm font-bold text-gray-800 hover:bg-gray-50 hover:border-gray-400 transition shadow-sm">
+                                    إضافات
+                                </button>
+                            </div>
+
+                            <div class="flex gap-2 mt-2">
+                                <button id="submitOrderBtn"
+                                    class="flex-1 px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-bold hover:from-green-700 hover:to-green-800 transition shadow-lg text-xs sm:text-base">
+                                    إرسال الطلب
+                                </button>
+                                <button id="clearBtn"
+                                    class="px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-bold hover:from-red-700 hover:to-red-800 transition shadow-lg text-xs sm:text-base">
+                                    مسح
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Products -->
+            <div class="lg:col-span-2 order-1 lg:order-2">
+                <div
+                    class="bg-gradient-to-b from-gray-50 to-white rounded-xl shadow-lg border-2 border-gray-200 p-3 sm:p-5">
+                    <!-- Header -->
+                    <div class="mb-3 sm:mb-5 pb-3 sm:pb-4 border-b-2 border-gray-300">
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">دوار العمده</h1>
+                        <p class="text-gray-600 text-sm sm:text-base">نظام الطلبات</p>
+                    </div>
+
+                    <!-- Search and Category Filters -->
+                    <div class="mb-3 sm:mb-4">
+                        <div class="flex gap-2 items-center mb-2">
+                            <!-- Search Input -->
+                            <input type="text" id="searchInput" placeholder="ابحث عن منتج..."
+                                class="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-teal-500 text-sm sm:text-base font-semibold bg-white">
+                        </div>
+                        <div class="flex gap-2 overflow-x-auto pb-2" id="categoryTabs">
+                            <!-- Categories will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Products Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4"
+                        id="productsGrid">
+                        <!-- Products will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Size Selection Modal -->
+    <div id="sizeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800" id="sizeModalProductName">اختر الحجم</h2>
+                <button id="closeSizeModalBtn"
+                    class="text-gray-500 hover:text-gray-700 text-3xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition">×</button>
+            </div>
+
+            <div id="sizeOptions" class="space-y-3 mb-6">
+                <!-- Size options will be loaded here -->
+            </div>
+
+            <div class="flex gap-3">
+                <button id="confirmSizeBtn"
+                    class="flex-1 px-6 py-3 bg-teal-600 text-white rounded-lg font-bold text-lg shadow-lg border-2 border-teal-700 hover:bg-teal-700 transition">
+                    تأكيد
+                </button>
+                <button id="cancelSizeBtn"
+                    class="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg font-bold text-lg hover:bg-gray-400 transition">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additions Modal -->
+    <div id="additionsModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+        <div class="bg-white rounded-xl p-4 sm:p-6 max-w-4xl w-full mx-2 sm:mx-4 shadow-2xl max-h-[90vh] flex flex-col">
+            <!-- Header with close button -->
+            <div class="flex justify-end items-center mb-3 sm:mb-4">
+                <button id="closeAdditionsModalBtn"
+                    class="text-gray-500 hover:text-gray-700 text-2xl sm:text-3xl font-bold w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition">×</button>
+            </div>
+
+            <!-- Product Selection -->
+            <div class="mb-4 sm:mb-6">
+                <label class="block text-xs sm:text-sm font-bold text-gray-700 mb-2">اختر المنتج</label>
+                <select id="additionsProductSelect"
+                    class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg text-sm sm:text-lg font-bold focus:outline-none focus:border-teal-500 bg-white">
+                    <option value="">-- اختر منتج --</option>
+                </select>
+            </div>
+
+            <!-- Additions Options - Grid Layout -->
+            <div class="flex-1 overflow-y-auto mb-4 sm:mb-6 pr-2">
+                <div id="additionsOptions" class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                    <!-- Options will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 sm:gap-3">
+                <button id="saveAdditionsBtn"
+                    class="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-teal-600 text-white rounded-lg font-bold text-sm sm:text-lg shadow-lg border-2 border-teal-700 hover:bg-teal-700 transition">
+                    حفظ
+                </button>
+                <button id="cancelAdditionsBtn"
+                    class="px-4 sm:px-6 py-2 sm:py-3 bg-gray-300 text-gray-800 rounded-lg font-bold text-sm sm:text-lg hover:bg-gray-400 transition">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Ready Modal -->
+    <div id="orderReadyModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[99999]">
+        <div class="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="text-center">
+                <div class="mb-4">
+                    <svg class="w-20 h-20 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2" id="orderReadyTitle">طلبك جاهز للاستلام
+                </h2>
+                <p class="text-lg sm:text-xl text-gray-600 mb-6" id="orderReadyMessage">الطاولة رقم <span
+                        id="orderReadyTableNumber"></span></p>
+                <button id="orderReadyConfirmBtn"
+                    class="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-bold text-lg shadow-lg hover:from-green-700 hover:to-green-800 transition">
+                    تم الاستلام ✓
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/tablet.js"></script>
+    <script>
+        // Initialize notification manager immediately
+        if (typeof NotificationManager !== 'undefined') {
+            window.notificationManager = new NotificationManager();
+            console.log('NotificationManager initialized for tablet');
+        } else {
+            console.error('NotificationManager class not found!');
+        }
+    </script>
+</body>
+
+</html>

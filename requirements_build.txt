@@ -1,0 +1,11 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+websockets>=13.0
+pydantic>=2.9.0
+python-multipart>=0.0.12
+pyinstaller>=6.15.0
+Pillow>=10.0.0
+PyQt5>=5.15.0
+PyQtWebEngine>=5.15.0
+pywin32>=306; sys_platform == "win32"  # For USB printer RAW printing on Windows
+

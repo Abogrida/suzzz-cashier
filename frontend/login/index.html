@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - دوار العمده</title>
+    <script src="/static/css/tailwind.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Cairo';
+            src: url('/static/fonts/Cairo-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Cairo';
+            src: url('/static/fonts/Cairo-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        * {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="w-full max-w-md mx-auto p-6">
+        <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <img src="/static/images/logo.png?v=3" alt="DawarElOmda" class="mx-auto h-24 w-auto mb-4" id="logoImg"
+                    onerror="this.style.display='none'">
+                <h1 class="text-3xl font-bold text-gray-800">دوار العمده</h1>
+                <p class="text-gray-600 mt-2">نظام إدارة المطعم</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">كلمة المرور</label>
+                    <input type="password" id="passwordInput"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
+                        placeholder="أدخل كلمة المرور" autocomplete="off">
+                </div>
+
+                <button id="loginBtn"
+                    class="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-bold text-lg shadow-lg hover:from-blue-700 hover:to-blue-800 transition">
+                    تسجيل الدخول
+                </button>
+
+                <div id="errorMsg" class="text-red-600 text-sm text-center hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Login function - automatically detects page type based on password
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const password = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (!password) {
+                errorMsg.textContent = 'الرجاء إدخال كلمة المرور';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                // Try admin password first
+                const adminResponse = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, page_type: 'admin' })
+                });
+
+                if (adminResponse.ok) {
+                    const adminData = await adminResponse.json();
+                    if (adminData.success) {
+                        sessionStorage.setItem('authenticated', 'true');
+                        sessionStorage.setItem('pageType', 'admin');
+                        // Store specific role (admin or owner)
+                        if (adminData.role) {
+                            sessionStorage.setItem('role', adminData.role);
+                        } else {
+                            sessionStorage.setItem('role', 'admin');
+                        }
+                        window.location.href = '/admin/dashboard';
+                        return;
+                    }
+                }
+
+                // Try cashier password
+                const cashierResponse = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, page_type: 'cashier' })
+                });
+
+                if (cashierResponse.ok) {
+                    const cashierData = await cashierResponse.json();
+                    if (cashierData.success) {
+                        sessionStorage.setItem('authenticated', 'true');
+                        sessionStorage.setItem('pageType', 'cashier');
+                        window.location.href = '/cashier';
+                        return;
+                    }
+                }
+
+                // If both fail
+                errorMsg.textContent = 'كلمة المرور غير صحيحة';
+                errorMsg.classList.remove('hidden');
+            } catch (error) {
+                errorMsg.textContent = 'خطأ في الاتصال بالخادم';
+                errorMsg.classList.remove('hidden');
+            }
+        });
+
+        // Enter key to login
+        document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('loginBtn').click();
+            }
+        });
+
+        // Check if already authenticated
+        if (sessionStorage.getItem('authenticated') === 'true') {
+            const pageType = sessionStorage.getItem('pageType');
+            if (pageType === 'admin') {
+                window.location.href = '/admin/dashboard';
+            } else if (pageType === 'cashier') {
+                window.location.href = '/cashier';
+            }
+        }
+    </script>
+</body>
+
+</html>

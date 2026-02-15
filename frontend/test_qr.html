@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار QR Code</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .info-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .value {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .qr-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        .qr-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .qr-btn:active {
+            transform: scale(0.95);
+        }
+
+        #qrModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #qrModal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        #qrContainer {
+            display: inline-block;
+            padding: 20px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .url-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .close-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        .close-btn:hover {
+            background: #764ba2;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #c3e6cb;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎯 اختبار ميزة QR Code</h1>
+
+        <div class="success">
+            ✅ تم تحميل مكتبة QRCode.js بنجاح!
+        </div>
+
+        <div class="info-section">
+            <div class="info-row">
+                <span class="label">🌐 IP الشبكة:</span>
+                <span class="value" id="ipAddress">جاري التحميل...</span>
+            </div>
+
+            <div class="info-row">
+                <span class="label">📱 الكاشير:</span>
+                <span class="value" id="cashierUrl">جاري التحميل...</span>
+                <button class="qr-btn" onclick="showQR('cashier')">QR</button>
+            </div>
+
+            <div class="info-row">
+                <span class="label">📱 التابلت:</span>
+                <span class="value" id="tabletUrl">جاري التحميل...</span>
+                <button class="qr-btn" onclick="showQR('tablet')">QR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="qrModal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">QR Code</div>
+            <div id="qrContainer"></div>
+            <div class="url-display" id="urlDisplay"></div>
+            <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+                امسح الكود بالكاميرا للدخول مباشرة
+            </p>
+            <button class="close-btn" onclick="closeModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <script>
+        let networkData = {};
+        let currentIP = null;
+        let monitoringInterval = null;
+
+        // Load network info
+        async function loadNetworkInfo() {
+            try {
+                const response = await fetch('/api/admin/network/info');
+                if (response.ok) {
+                    networkData = await response.json();
+
+                    // Check if IP changed
+                    const ipChanged = currentIP && currentIP !== networkData.local_ip;
+                    currentIP = networkData.local_ip;
+
+                    document.getElementById('ipAddress').textContent = networkData.local_ip;
+                    document.getElementById('cashierUrl').textContent = networkData.main_server_url;
+                    document.getElementById('tabletUrl').textContent = networkData.tablet_server_url;
+
+                    // Show update indicator
+                    if (ipChanged) {
+                        showUpdateIndicator();
+                    }
+                } else {
+                    throw new Error('Failed to load network info');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('ipAddress').textContent = 'خطأ في التحميل';
+                document.getElementById('cashierUrl').textContent = 'خطأ في التحميل';
+                document.getElementById('tabletUrl').textContent = 'خطأ في التحميل';
+            }
+        }
+
+        function showUpdateIndicator() {
+            const container = document.querySelector('.container');
+            const indicator = document.createElement('div');
+            indicator.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 15px 25px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999; animation: slideIn 0.3s ease-out;';
+            indicator.textContent = '✅ تم تحديث IP الشبكة!';
+            document.body.appendChild(indicator);
+
+            setTimeout(() => {
+                indicator.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => indicator.remove(), 300);
+            }, 3000);
+        }
+
+        function startMonitoring() {
+            // Initial load
+            loadNetworkInfo();
+
+            // Auto-refresh every 5 seconds
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+            }
+
+            monitoringInterval = setInterval(() => {
+                loadNetworkInfo();
+            }, 5000);
+        }
+
+        function showQR(type) {
+            const modal = document.getElementById('qrModal');
+            const qrContainer = document.getElementById('qrContainer');
+            const modalTitle = document.getElementById('modalTitle');
+            const urlDisplay = document.getElementById('urlDisplay');
+
+            let url, title;
+            if (type === 'cashier') {
+                url = networkData.main_server_url;
+                title = 'الكاشير';
+            } else {
+                url = networkData.tablet_server_url;
+                title = 'التابلت';
+            }
+
+            modalTitle.textContent = `QR Code - ${title}`;
+            urlDisplay.textContent = url;
+            qrContainer.innerHTML = '';
+
+            try {
+                new QRCode(qrContainer, {
+                    text: url,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                modal.classList.add('show');
+            } catch (error) {
+                console.error('Error generating QR:', error);
+                alert('خطأ في إنشاء QR Code');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('qrModal').classList.remove('show');
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Start monitoring on page load
+        startMonitoring();
+
+        // Stop monitoring when leaving page
+        window.addEventListener('beforeunload', () => {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+            }
+        });
+    </script>
+</body>
+
+</html>
