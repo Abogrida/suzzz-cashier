@@ -7,7 +7,7 @@ from typing import List, Optional
 import os
 import uvicorn
 from contextlib import asynccontextmanager
-from database import init_db, get_db, SyncOrder, SyncInvoice, SyncShift
+from database import init_db, get_db, SyncOrder, SyncInvoice, SyncShift, SyncCategory, SyncProduct, SyncSetting
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from dotenv import load_dotenv
@@ -225,32 +225,165 @@ def get_daily_report(report_date: str = None, db: Session = Depends(get_db)):
     
     # Best sellers would require parsing item JSON, skipping for now
     
-    return {
-        "total_sales": total_sales,
-        "order_count": order_count,
-        "best_sellers": [] 
-    }
+@app.post("/api/sync/heartbeat")
+def sync_heartbeat(db: Session = Depends(get_db)):
+    # Store heartbeat timestamp in settings
+    try:
+        current_time = datetime.datetime.now().isoformat()
+        heartbeat_setting = db.query(SyncSetting).filter(SyncSetting.key == "last_heartbeat").first()
+        if heartbeat_setting:
+            heartbeat_setting.value = current_time
+            heartbeat_setting.updated_at = current_time
+        else:
+            new_setting = SyncSetting(
+                key="last_heartbeat",
+                value=current_time,
+                updated_at=current_time,
+                raw_data={}
+            )
+            db.add(new_setting)
+        db.commit()
+        return {"status": "online", "timestamp": current_time}
+    except Exception as e:
+        print(f"Error saving heartbeat: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/admin/network/status")
+def get_connection_status(db: Session = Depends(get_db)):
+    try:
+        heartbeat_setting = db.query(SyncSetting).filter(SyncSetting.key == "last_heartbeat").first()
+        if not heartbeat_setting:
+            return {"connected": False, "last_seen": "Never"}
+            
+        last_heartbeat_str = heartbeat_setting.value
+        if not last_heartbeat_str:
+            return {"connected": False, "last_seen": "Never"}
+            
+        last_heartbeat = datetime.datetime.fromisoformat(last_heartbeat_str)
+        now = datetime.datetime.now()
+        diff = (now - last_heartbeat).total_seconds()
+        
+        # Consider connected if heartbeat within last 30 seconds (sync interval is 10s)
+        is_connected = diff < 30
+        
+        return {
+            "connected": is_connected,
+            "last_seen": last_heartbeat_str,
+            "seconds_ago": int(diff)
+        }
+    except Exception as e:
+        return {"connected": False, "error": str(e)}
 
 # --- Settings & Auth Stubs ---
 
+@app.post("/api/sync/products", dependencies=[Depends(verify_secret)])
+def sync_products(products: List[dict], db: Session = Depends(get_db)):
+    try:
+        count = 0
+        for prod_data in products:
+            local_id = prod_data.get('id')
+            existing = db.query(SyncProduct).filter(SyncProduct.local_id == local_id).first()
+            if existing:
+                # Update existing
+                existing.name = prod_data.get('name')
+                existing.price = prod_data.get('price')
+                existing.category_id = prod_data.get('category_id')
+                existing.raw_data = prod_data
+            else:
+                # Create new
+                new_prod = SyncProduct(
+                    local_id=local_id,
+                    name=prod_data.get('name'),
+                    price=prod_data.get('price'),
+                    category_id=prod_data.get('category_id'),
+                    raw_data=prod_data
+                )
+                db.add(new_prod)
+            count += 1
+        db.commit()
+        return {"status": "success", "synced_count": count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/sync/categories", dependencies=[Depends(verify_secret)])
+def sync_categories(categories: List[dict], db: Session = Depends(get_db)):
+    try:
+        count = 0
+        for cat_data in categories:
+            local_id = cat_data.get('id')
+            existing = db.query(SyncCategory).filter(SyncCategory.local_id == local_id).first()
+            if existing:
+                existing.name = cat_data.get('name')
+                existing.raw_data = cat_data
+            else:
+                new_cat = SyncCategory(
+                    local_id=local_id,
+                    name=cat_data.get('name'),
+                    raw_data=cat_data
+                )
+                db.add(new_cat)
+            count += 1
+        db.commit()
+        return {"status": "success", "synced_count": count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/sync/settings", dependencies=[Depends(verify_secret)])
+def sync_settings(settings: List[dict], db: Session = Depends(get_db)):
+    try:
+        count = 0
+        for set_data in settings:
+            key = set_data.get('key')
+            # For settings, key is unique enough, or we check local_id if strictly following others
+            # But let's stick to key
+            existing = db.query(SyncSetting).filter(SyncSetting.key == key).first()
+            if existing:
+                existing.value = set_data.get('value')
+                existing.updated_at = set_data.get('updated_at')
+                existing.raw_data = set_data
+            else:
+                new_set = SyncSetting(
+                    key=key,
+                    value=set_data.get('value'),
+                    updated_at=set_data.get('updated_at'),
+                    raw_data=set_data
+                )
+                db.add(new_set)
+            count += 1
+        db.commit()
+        return {"status": "success", "synced_count": count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/sync/heartbeat")
+def sync_heartbeat():
+    # Just a ping to check connection
+    return {"status": "online", "timestamp": str(datetime.datetime.now())}
+
 @app.get("/api/auth/passwords")
-def get_passwords():
-    # Return dummy or environment-configured passwords for cloud view
-    # In a real app, these should be secured or not exposed if not needed
+def get_passwords(db: Session = Depends(get_db)):
+    # Try to get from synced settings
+    admin_pass = db.query(SyncSetting).filter(SyncSetting.key == "admin_password").first()
+    cashier_pass = db.query(SyncSetting).filter(SyncSetting.key == "cashier_password").first()
+    
     return {
-        "admin_password": "cloud_admin_view_only", 
-        "cashier_password": "N/A"
+        "admin_password": admin_pass.value if admin_pass else "Wait for Sync...",
+        "cashier_password": cashier_pass.value if cashier_pass else "Wait for Sync..."
     }
 
 @app.get("/api/settings")
-def get_settings():
+def get_settings(db: Session = Depends(get_db)):
+    settings_list = db.query(SyncSetting).all()
+    settings_dict = {s.key: s.value for s in settings_list}
+    
+    # Fill defaults if missing
     return {
-        "printer_ip": "",
-        "restaurant_name": "Suzz Cloud View",
-        "restaurant_address": "Online",
-        "footer_text": "Powered by Suzz System",
-        "playstation_price_per_hour": 0,
-        "playstation_price_multi": 0
+        "printer_ip": settings_dict.get("printer_ip", ""),
+        "restaurant_name": settings_dict.get("restaurant_name", "Suzz Cloud View"),
+        "restaurant_address": settings_dict.get("restaurant_address", "Online"),
+        "footer_text": settings_dict.get("footer_text", "Powered by Suzz System"),
+        "playstation_price_per_hour": settings_dict.get("playstation_price_per_hour", 0),
+        "playstation_price_multi": settings_dict.get("playstation_price_multi", 0)
     }
 
 @app.get("/api/settings/discount_permission")

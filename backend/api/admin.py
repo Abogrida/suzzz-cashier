@@ -21,12 +21,28 @@ def get_local_ip():
 def get_network_info():
     """Get network information for admin panel"""
     local_ip = get_local_ip()
+    
+    # Get cloud connection status
+    cloud_status = "unknown"
+    db = get_db()
+    try:
+        cursor = db.cursor()
+        cursor.execute("SELECT value FROM settings WHERE key = 'cloud_connection_status'")
+        result = cursor.fetchone()
+        if result:
+            cloud_status = result["value"]
+    except:
+        pass
+    finally:
+        db.close()
+
     return {
         "local_ip": local_ip,
         "main_server_url": f"http://{local_ip}:3000",
         "tablet_server_url": f"http://{local_ip}:3001/tablet",
         "local_main_url": "http://localhost:3000",
-        "local_tablet_url": "http://localhost:3001/tablet"
+        "local_tablet_url": "http://localhost:3001/tablet",
+        "cloud_connection_status": cloud_status
     }
 
 @router.get("/reports/daily")

@@ -20,6 +20,8 @@ wheels/
 *.egg
 cashier.db
 *.exe
+*.db-shm
+*.db-wal
 
 .venv/
 venv/

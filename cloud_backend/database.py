@@ -49,6 +49,30 @@ class SyncShift(Base):
     closed_at = Column(String)
     raw_data = Column(JSON)
 
+class SyncCategory(Base):
+    __tablename__ = "categories"
+    id = Column(Integer, primary_key=True, index=True)
+    local_id = Column(Integer, index=True)
+    name = Column(String)
+    raw_data = Column(JSON)
+
+class SyncProduct(Base):
+    __tablename__ = "products"
+    id = Column(Integer, primary_key=True, index=True)
+    local_id = Column(Integer, index=True)
+    name = Column(String)
+    price = Column(Float)
+    category_id = Column(Integer)
+    raw_data = Column(JSON)
+
+class SyncSetting(Base):
+    __tablename__ = "settings"
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, index=True)
+    value = Column(String)
+    updated_at = Column(String)
+    raw_data = Column(JSON)
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

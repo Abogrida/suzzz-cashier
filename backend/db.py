@@ -505,10 +505,41 @@ def init_db():
     except:
         pass
         
-    # Add is_synced to tables (optional, but good for real-time status online)
+    except:
+        pass
+
+    # Add is_synced to categories
     try:
-        cursor.execute("ALTER TABLE tables ADD COLUMN is_synced INTEGER DEFAULT 0")
-        print("Added 'is_synced' to tables")
+        cursor.execute("ALTER TABLE categories ADD COLUMN is_synced INTEGER DEFAULT 0")
+        print("Added 'is_synced' to categories")
+    except:
+        pass
+
+    # Add is_synced to products
+    try:
+        cursor.execute("ALTER TABLE products ADD COLUMN is_synced INTEGER DEFAULT 0")
+        print("Added 'is_synced' to products")
+    except:
+        pass
+
+    # Add is_synced to settings
+    try:
+        cursor.execute("ALTER TABLE settings ADD COLUMN is_synced INTEGER DEFAULT 0")
+        print("Added 'is_synced' to settings")
+    except:
+        pass
+
+    # Add is_synced to shift_settings
+    try:
+        cursor.execute("ALTER TABLE shift_settings ADD COLUMN is_synced INTEGER DEFAULT 0")
+        print("Added 'is_synced' to shift_settings")
+    except:
+        pass
+
+    # Add is_synced to product_additions
+    try:
+        cursor.execute("ALTER TABLE product_additions ADD COLUMN is_synced INTEGER DEFAULT 0")
+        print("Added 'is_synced' to product_additions")
     except:
         pass
 

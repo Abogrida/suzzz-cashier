@@ -371,6 +371,23 @@ async function loadNetworkInfo() {
                                 QR
                             </button>
                         </div>
+
+                        <!-- Cloud Connection Status -->
+                        <div class="flex items-center gap-2">
+                            ${networkInfo.cloud_connection_status === 'connected' ? 
+                                `<div class="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded border border-green-200 transition-colors">
+                                    <span class="relative flex h-2 w-2">
+                                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                    </span>
+                                    <span class="font-bold text-xs">سحابة متصلة</span>
+                                </div>` : 
+                                `<div class="flex items-center gap-2 px-3 py-1 bg-red-50 text-red-700 rounded border border-red-200 transition-colors">
+                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                    <span class="font-bold text-xs">سحابة مفصولة</span>
+                                </div>`
+                            }
+                        </div>
                     </div>
                 `;
 

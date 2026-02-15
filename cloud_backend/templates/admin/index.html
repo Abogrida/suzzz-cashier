@@ -280,8 +280,13 @@
                     <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">لوحة التحكم</h1>
                     <p class="text-gray-600 mt-1 text-sm sm:text-base">دوار العمده - نظام إدارة المطعم</p>
                     <!-- Network Info -->
-                    <div id="networkInfo" class="mt-2 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-                        <span class="text-gray-500">جاري التحميل...</span>
+                    <div id="networkInfo" class="mt-2 flex flex-wrap items-center gap-4 text-xs sm:text-sm">
+                        <div id="connectionStatus"
+                            class="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-gray-600 transition-colors border border-gray-200">
+                            <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                            <span class="font-semibold">جاري التحقق...</span>
+                        </div>
+                        <div id="lastSeen" class="text-gray-500 hidden sm:block font-mono text-xs"></div>
                     </div>
                 </div>
                 <button onclick="logout()"
@@ -1336,6 +1341,50 @@
 
                 console.log('✅✅✅ PDF download blocker ACTIVATED - NO PDF FILES ALLOWED');
             })();
+        </script>
+        <script>
+            // Connection Status Polling
+            function updateConnectionStatus() {
+                const statusEl = document.getElementById('connectionStatus');
+                const lastSeenEl = document.getElementById('lastSeen');
+
+                if (!statusEl) return;
+
+                fetch('/api/admin/network/status')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.connected) {
+                            statusEl.className = 'flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-700 transition-colors border border-green-200';
+                            statusEl.innerHTML = '<span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span><span class="font-bold">المطعم متصل</span>';
+                        } else {
+                            statusEl.className = 'flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-700 transition-colors border border-red-200';
+                            statusEl.innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500"></span><span class="font-bold">المطعم غير متصل</span>';
+                        }
+
+                        if (lastSeenEl) {
+                            if (data.seconds_ago !== undefined && !data.connected) {
+                                let timeText = '';
+                                if (data.seconds_ago < 60) {
+                                    timeText = `منذ ${data.seconds_ago} ثانية`;
+                                } else if (data.seconds_ago < 3600) {
+                                    timeText = `منذ ${Math.floor(data.seconds_ago / 60)} دقيقة`;
+                                } else {
+                                    timeText = `منذ ${Math.floor(data.seconds_ago / 3600)} ساعة`;
+                                }
+                                lastSeenEl.textContent = `آخر ظهور: ${timeText}`;
+                            } else if (data.connected) {
+                                lastSeenEl.textContent = '';
+                            }
+                        }
+                    })
+                    .catch(err => console.error('Error checking connection:', err));
+            }
+
+            // Start polling
+            document.addEventListener('DOMContentLoaded', () => {
+                updateConnectionStatus();
+                setInterval(updateConnectionStatus, 10000); // Check every 10 seconds
+            });
         </script>
 </body>
 

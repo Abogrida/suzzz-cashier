@@ -57,6 +57,22 @@ class SyncAgent:
             return False
 
     def _sync_data(self):
+        # Check connection and update status
+        is_connected = self._check_cloud_connection()
+        self._update_connection_status(is_connected)
+        
+        if not is_connected:
+            return
+
+        # Sync Categories first (dependency for products)
+        self._sync_table("categories", "/api/sync/categories")
+
+        # Sync Products
+        self._sync_table("products", "/api/sync/products")
+
+        # Sync Settings
+        self._sync_table("settings", "/api/sync/settings")
+
         # Sync Orders
         self._sync_table("orders", "/api/sync/orders")
         
@@ -65,6 +81,43 @@ class SyncAgent:
         
         # Sync Shifts
         self._sync_table("shifts", "/api/sync/shifts")
+
+    def _check_cloud_connection(self):
+        try:
+            # We assume the cloud URL is configured in settings or hardcoded
+            # This logic is duplicated in _sync_table, should ideally be refactored to a property or helper
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("SELECT value FROM settings WHERE key = 'cloud_url'")
+            setting = cursor.fetchone()
+            cloud_url = setting['value'] if setting else CLOUD_API_URL
+            db.close()
+            
+            if not cloud_url or "YOUR_RENDER_APP_URL" in cloud_url:
+                return False
+                
+            response = requests.post(f"{cloud_url}/api/sync/heartbeat", timeout=5)
+            return response.status_code == 200
+        except:
+            return False
+
+    def _update_connection_status(self, is_connected):
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            status_value = "connected" if is_connected else "disconnected"
+            
+            # Check if key exists
+            cursor.execute("SELECT 1 FROM settings WHERE key = 'cloud_connection_status'")
+            if cursor.fetchone():
+                cursor.execute("UPDATE settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = 'cloud_connection_status'", (status_value,))
+            else:
+                cursor.execute("INSERT INTO settings (key, value) VALUES (?, ?)", ('cloud_connection_status', status_value))
+            
+            db.commit()
+            db.close()
+        except Exception as e:
+            print(f"[SyncAgent] Error updating connection status: {e}")
 
     def _sync_table(self, table_name, api_endpoint):
         db = None
