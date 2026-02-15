@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: suzz-cloud
+    env: python
+    region: frankfurt
+    plan: free
+    branch: main
+    repo: https://github.com/Abogrida/suzzz-cashier
+    rootDir: cloud_backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: SYNC_SECRET
+        sync: false
