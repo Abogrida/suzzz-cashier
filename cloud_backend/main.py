@@ -17,6 +17,7 @@ import datetime
 load_dotenv()
 
 # Secret key for simple authentication
+# Ensure this matches the local agent
 SYNC_SECRET = os.environ.get("SYNC_SECRET", "change_me_to_secure_secret")
 
 @asynccontextmanager

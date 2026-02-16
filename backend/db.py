@@ -504,9 +504,6 @@ def init_db():
         print("Added 'is_synced' to shifts")
     except:
         pass
-        
-    except:
-        pass
 
     # Add is_synced to categories
     try:

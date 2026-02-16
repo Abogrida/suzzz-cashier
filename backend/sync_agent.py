@@ -137,12 +137,19 @@ class SyncAgent:
             # Convert rows to dict
             data = [dict(row) for row in rows]
             
+            # Remove image data to save bandwidth
+            for item in data:
+                if 'image' in item:
+                    item.pop('image')
+                if 'image_path' in item:
+                    item.pop('image_path')
+            
             # Send to Cloud
             # Note: We need a way to authenticate. For now, we'll use a simple approach 
             # or rely on the endpoint being open/protected by a shared secret key in headers
             headers = {
                 "Content-Type": "application/json",
-                "X-Sync-Secret": "my_secure_password_123" 
+                "X-Sync-Secret": "change_me_to_secure_secret" 
             }
             
             # We assume the cloud URL is configured in settings or hardcoded for now

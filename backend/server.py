@@ -43,6 +43,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Start Sync Agent
+@app.on_event("startup")
+async def startup_event():
+    try:
+        from sync_agent import sync_agent
+        sync_agent.start()
+        print("[INFO] SyncAgent started successfully")
+    except Exception as e:
+        print(f"[ERROR] Failed to start SyncAgent: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    try:
+        from sync_agent import sync_agent
+        sync_agent.stop()
+        print("[INFO] SyncAgent stopped successfully")
+    except Exception as e:
+        print(f"[ERROR] Failed to stop SyncAgent: {e}")
+
 # Block any PDF download attempts - FORCE BLOCK - NO PDF FILES ALLOWED
 @app.middleware("http")
 async def block_pdf_downloads(request, call_next):
