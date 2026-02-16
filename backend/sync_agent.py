@@ -15,6 +15,9 @@ from db import get_db
 CLOUD_API_URL = "https://suzz-cloud.onrender.com" # Updated after deployment
 SYNC_INTERVAL = 10 # Seconds
 BATCH_SIZE = 50
+# Read secret from environment or use default (must match cloud backend)
+# Render has my_secure_password_123 set in environment
+SYNC_SECRET = os.environ.get("SYNC_SECRET", "my_secure_password_123")
 
 class SyncAgent:
     def __init__(self):
@@ -149,7 +152,7 @@ class SyncAgent:
             # or rely on the endpoint being open/protected by a shared secret key in headers
             headers = {
                 "Content-Type": "application/json",
-                "X-Sync-Secret": "change_me_to_secure_secret" 
+                "X-Sync-Secret": SYNC_SECRET
             }
             
             # We assume the cloud URL is configured in settings or hardcoded for now

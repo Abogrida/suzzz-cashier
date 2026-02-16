@@ -1,12 +1,15 @@
 import requests
 import sqlite3
 import json
+import os
 
 CLOUD_URL = "https://suzz-cloud.onrender.com"
 DB_PATH = "cashier.db"
+SYNC_SECRET = os.environ.get("SYNC_SECRET", "change_me_to_secure_secret")
 
 def manual_sync_products():
     print("--- Manual Sync Products Debug ---")
+    print(f"Using Secret: {SYNC_SECRET[:10]}...")
     try:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row  # This enables column access by name
@@ -35,7 +38,7 @@ def manual_sync_products():
         
         headers = {
             "Content-Type": "application/json",
-            "X-Sync-Secret": "change_me_to_secure_secret" 
+            "X-Sync-Secret": SYNC_SECRET
         }
         
         print(f"Sending to {CLOUD_URL}/api/sync/products")

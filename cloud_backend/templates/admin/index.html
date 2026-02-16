@@ -1385,6 +1385,89 @@
                 updateConnectionStatus();
                 setInterval(updateConnectionStatus, 10000); // Check every 10 seconds
             });
+
+            // View Order Details Function
+            function viewOrder(orderId) {
+                const modal = document.getElementById('orderDetailsModal');
+                const content = document.getElementById('orderDetailsContent');
+
+                if (!modal || !content) return;
+
+                // Show modal
+                modal.classList.remove('hidden');
+
+                // Show loading
+                content.innerHTML = '<div class="text-center py-8"><div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div><p class="mt-4 text-gray-600">جاري التحميل...</p></div>';
+
+                // Fetch order details
+                fetch(`/api/orders`)
+                    .then(response => response.json())
+                    .then(orders => {
+                        const order = orders.find(o => o.id === orderId);
+                        if (!order) {
+                            content.innerHTML = '<div class="text-center py-8 text-red-600">لم يتم العثور على الطلب</div>';
+                            return;
+                        }
+
+                        // Build order details HTML
+                        let itemsHTML = '';
+                        if (order.items && order.items.length > 0) {
+                            itemsHTML = '<div class="mt-6"><h3 class="text-lg font-bold mb-3">المنتجات:</h3><div class="space-y-2">';
+                            order.items.forEach(item => {
+                                itemsHTML += `
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <p class="font-semibold">${item.name || 'منتج'}</p>
+                                            ${item.size ? `<p class="text-sm text-gray-600">الحجم: ${item.size}</p>` : ''}
+                                        </div>
+                                        <div class="text-left">
+                                            <p class="font-semibold">${item.quantity || 1} × ${item.price || 0} جنيه</p>
+                                            <p class="text-sm text-gray-600">= ${(item.quantity || 1) * (item.price || 0)} جنيه</p>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            itemsHTML += '</div></div>';
+                        }
+
+                        content.innerHTML = `
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                                    <div><span class="font-semibold">رقم الطلب:</span> ${order.order_number || order.id}</div>
+                                    <div><span class="font-semibold">رقم الطاولة:</span> ${order.table_number || '-'}</div>
+                                    <div><span class="font-semibold">اسم العميل:</span> ${order.customer_name || '-'}</div>
+                                    <div><span class="font-semibold">الهاتف:</span> ${order.customer_phone || '-'}</div>
+                                    <div><span class="font-semibold">الحالة:</span> <span class="px-2 py-1 rounded text-sm ${order.status === 'completed' ? 'bg-green-100 text-green-700' : order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">${order.status === 'completed' ? 'مكتمل' : order.status === 'pending' ? 'قيد الانتظار' : order.status}</span></div>
+                                    <div><span class="font-semibold">التاريخ:</span> ${order.created_at || '-'}</div>
+                                </div>
+                                
+                                ${itemsHTML}
+                                
+                                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                                    <h3 class="text-lg font-bold mb-3">الإجمالي:</h3>
+                                    <div class="space-y-2 text-right">
+                                        <div class="flex justify-between"><span>المجموع الفرعي:</span> <span>${order.total_amount - (order.tax || 0) - (order.service || 0) || 0} جنيه</span></div>
+                                        ${order.discount ? `<div class="flex justify-between text-red-600"><span>الخصم:</span> <span>-${order.discount} جنيه</span></div>` : ''}
+                                        ${order.tax ? `<div class="flex justify-between"><span>الضريبة:</span> <span>${order.tax} جنيه</span></div>` : ''}
+                                        ${order.service ? `<div class="flex justify-between"><span>الخدمة:</span> <span>${order.service} جنيه</span></div>` : ''}
+                                        <div class="flex justify-between font-bold text-lg border-t pt-2"><span>الإجمالي:</span> <span>${order.total_amount || 0} جنيه</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    })
+                    .catch(err => {
+                        console.error('Error loading order:', err);
+                        content.innerHTML = '<div class="text-center py-8 text-red-600">حدث خطأ أثناء تحميل التفاصيل</div>';
+                    });
+            }
+
+            function closeOrderDetailsModal() {
+                const modal = document.getElementById('orderDetailsModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+            }
         </script>
 </body>
 
