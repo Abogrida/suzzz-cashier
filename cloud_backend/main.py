@@ -301,6 +301,23 @@ def get_printers():
     """Return empty printers list - cloud view doesn't manage printers"""
     return []
 
+@app.get("/api/printers/list")
+def get_printers_list():
+    """Return empty printers list - cloud view doesn't manage printers"""
+    return {"printers": []}
+
+# WebSocket stub (cloud doesn't need real-time updates)
+@app.websocket("/ws")
+async def websocket_endpoint(websocket):
+    """Stub WebSocket endpoint to prevent errors"""
+    await websocket.accept()
+    # Just keep connection open but don't send anything
+    try:
+        while True:
+            await websocket.receive_text()
+    except:
+        pass
+
 
 # --- Reports APIs (Mock/Simple) ---
 
