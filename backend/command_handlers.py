@@ -6,7 +6,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from db import get_db_connection
+from db import get_db
 
 async def handle_add_category(payload: dict) -> dict:
     """Add a new category"""
@@ -42,7 +42,7 @@ async def handle_edit_category(payload: dict) -> dict:
     if not category_id or not name:
         raise Exception("Category ID and name are required")
     
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor()
     
     try:
@@ -71,7 +71,7 @@ async def handle_delete_category(payload: dict) -> dict:
     if not category_id:
         raise Exception("Category ID is required")
     
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor()
     
     try:
@@ -91,7 +91,7 @@ async def handle_delete_category(payload: dict) -> dict:
 
 async def handle_add_product(payload: dict) -> dict:
     """Add a new product"""
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor()
     
     try:
@@ -129,7 +129,7 @@ async def handle_add_product(payload: dict) -> dict:
 
 async def handle_edit_product(payload: dict) -> dict:
     """Edit an existing product"""
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor()
     
     try:
@@ -173,7 +173,7 @@ async def handle_delete_product(payload: dict) -> dict:
     if not product_id:
         raise Exception("Product ID is required")
     
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor()
     
     try:
@@ -199,7 +199,7 @@ async def handle_toggle_product(payload: dict) -> dict:
     if not product_id or enabled is None:
         raise Exception("Product ID and enabled status are required")
     
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor()
     
     try:

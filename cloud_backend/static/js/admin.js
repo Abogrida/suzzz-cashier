@@ -933,20 +933,12 @@ async function deleteCategory(id) {
     if (!await notificationManager.confirm('هل أنت متأكد من حذف هذه الفئة؟')) return;
 
     try {
-        const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
-        if (response.ok) {
-            await loadCategories();
-            // Broadcast update via WebSocket
-            if (window.ws && window.ws.readyState === WebSocket.OPEN) {
-                window.ws.send(JSON.stringify({ type: 'categories_updated' }));
-            }
-        } else {
-            const error = await response.json();
-            notificationManager.error(error.detail || 'خطأ في حذف الفئة');
-        }
+        await executeCommand('delete_category', { id: id });
+        await loadCategories();
+        notificationManager.success('تم حذف الفئة بنجاح');
     } catch (error) {
         console.error('Error deleting category:', error);
-        notificationManager.error('خطأ في حذف الفئة');
+        // Error already shown by executeCommand
     }
 }
 
@@ -1240,83 +1232,66 @@ async function saveProduct() {
 
             console.log('Request body:', body);
 
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
+            // Use executeCommand instead of direct API call
+            const commandType = currentProductId ? 'edit_product' : 'add_product';
+            if (currentProductId) {
+                body.id = currentProductId;
+            }
 
-            console.log('Response status:', response.status);
+            const result = await executeCommand(commandType, body);
+            const product = result;
 
-            if (response.ok) {
-                const product = await response.json();
-                console.log('Product saved:', product);
+            console.log('Product saved:', product);
 
-                // Upload image if selected
-                if (imageInput && imageInput.files.length > 0) {
-                    console.log('Uploading image...');
-                    const formData = new FormData();
-                    formData.append('file', imageInput.files[0]);
+            // Upload image if selected
+            if (imageInput && imageInput.files.length > 0) {
+                console.log('Uploading image...');
+                const formData = new FormData();
+                formData.append('file', imageInput.files[0]);
 
-                    const uploadResponse = await fetch(`/api/products/${product.id}/upload-image`, {
-                        method: 'POST',
-                        body: formData
-                    });
+                // Note: Image upload still uses direct API - cloud doesn't handle file uploads via WebSocket
+                const uploadResponse = await fetch(`/api/products/${product.id}/upload-image`, {
+                    method: 'POST',
+                    body: formData
+                });
 
-                    if (!uploadResponse.ok) {
-                        console.error('Image upload failed');
-                        notificationManager.warning('تم حفظ المنتج ولكن فشل رفع الصورة');
-                    } else {
-                        console.log('Image uploaded successfully');
-                    }
+                if (!uploadResponse.ok) {
+                    console.error('Image upload failed');
+                    notificationManager.warning('تم حفظ المنتج ولكن فشل رفع الصورة');
+                } else {
+                    console.log('Image uploaded successfully');
                 }
+            }
 
-                closeProductModal();
-                await loadProducts();
-                notificationManager.success('تم حفظ المنتج بنجاح');
+            closeProductModal();
+            await loadProducts();
+            notificationManager.success('تم حفظ المنتج بنجاح');
 
-                // Broadcast update via WebSocket
-                if (window.ws && window.ws.readyState === WebSocket.OPEN) {
-                    window.ws.send(JSON.stringify({ type: 'products_updated' }));
-                }
-            } else {
-                const error = await response.json();
-                console.error('Error response:', error);
-                notificationManager.error(error.detail || 'خطأ في حفظ المنتج');
-                alert('Error saving product: ' + (error.detail || 'Unknown error'));
+            // Broadcast update via WebSocket
+            if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+                window.ws.send(JSON.stringify({ type: 'products_updated' }));
             }
         } catch (error) {
-            console.error('Error in saveProduct fetch:', error);
-            notificationManager.error('خطأ في حفظ المنتج: ' + error.message);
-            alert('Exception in saveProduct: ' + error.message);
+            console.error('Error saving product:', error);
+            // Error already shown by executeCommand
         }
-    } catch (e) {
-        console.error('CRITICAL ERROR in saveProduct:', e);
-        alert('Critical error in saveProduct: ' + e.message);
+    } catch (error) {
+        console.error('Error in saveProduct:', error);
+        notificationManager.error('حدث خطأ غير متوقع');
     }
 }
 
 async function toggleProduct(id, currentStatus) {
     try {
-        const response = await fetch(`/api/products/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enabled: !currentStatus })
+        await executeCommand('toggle_product', {
+            id: id,
+            enabled: !currentStatus
         });
-
-        if (response.ok) {
-            await loadProducts();
-            // Broadcast update via WebSocket
-            if (window.ws && window.ws.readyState === WebSocket.OPEN) {
-                window.ws.send(JSON.stringify({ type: 'products_updated' }));
-            }
-        } else {
-            const error = await response.json();
-            notificationManager.error(error.detail || 'خطأ في تحديث المنتج');
-        }
+        await loadProducts();
+        notificationManager.success('تم تحديث المنتج بنجاح');
     } catch (error) {
         console.error('Error toggling product:', error);
-        notificationManager.error('خطأ في تحديث المنتج');
+        // Error already shown by executeCommand
     }
 }
 
@@ -1324,23 +1299,14 @@ async function deleteProduct(id) {
     if (!await notificationManager.confirm('هل أنت متأكد من حذف هذا المنتج؟')) return;
 
     try {
-        const response = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-        if (response.ok) {
-            await loadProducts();
-            // Broadcast update via WebSocket
-            if (window.ws && window.ws.readyState === WebSocket.OPEN) {
-                window.ws.send(JSON.stringify({ type: 'products_updated' }));
-            }
-        } else {
-            const error = await response.json();
-            notificationManager.error(error.detail || 'خطأ في حذف المنتج');
-        }
+        await executeCommand('delete_product', { id: id });
+        await loadProducts();
+        notificationManager.success('تم حذف المنتج بنجاح');
     } catch (error) {
         console.error('Error deleting product:', error);
-        notificationManager.error('خطأ في حذف المنتج');
+        // Error already shown by executeCommand
     }
 }
-
 // Reports
 // Show report type
 function showReportType(type) {
