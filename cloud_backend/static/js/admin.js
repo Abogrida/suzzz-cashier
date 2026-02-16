@@ -23,6 +23,60 @@ function showCloudMessage(message = 'هذه الميزة غير متاحة في 
     showNotification(message, 'info');
 }
 
+// Helper: Execute command on Local System via WebSocket
+async function executeCommand(commandType, payload) {
+    try {
+        const response = await fetch('/api/command/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                type: commandType,
+                payload: payload
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Command failed');
+        }
+
+        const result = await response.json();
+
+        if (result.status === 'error') {
+            throw new Error(result.error || 'Command failed');
+        }
+
+        return result.result || result;
+
+    } catch (error) {
+        console.error(`[Command ${commandType}] Error:`, error);
+
+        // Check if it's a connection error
+        if (error.message.includes('offline') || error.message.includes('503')) {
+            showNotification('النظام المحلي غير متصل حالياً. لا يمكن تنفيذ العملية.', 'error');
+        } else {
+            showNotification(error.message || 'حدث خطأ أثناء تنفيذ العملية', 'error');
+        }
+
+        throw error;
+    }
+}
+
+// Helper: Check connection status
+async function checkConnectionStatus() {
+    try {
+        const response = await fetch('/api/connection/status');
+        const data = await response.json();
+        return data.online === true;
+    } catch (error) {
+        console.error('[Connection Status] Error:', error);
+        return false;
+    }
+}
+
+
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -854,39 +908,24 @@ async function saveCategory() {
     }
 
     try {
-        const url = currentCategoryId
-            ? `/api/categories/${currentCategoryId}`
-            : '/api/categories';
-        const method = currentCategoryId ? 'PUT' : 'POST';
+        // Use executeCommand for cloud control
+        const commandType = currentCategoryId ? 'edit_category' : 'add_category';
+        const payload = { name: name };
 
-        console.log('Saving category:', { name, url, method });
-
-        const response = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name })
-        });
-
-        console.log('Response status:', response.status);
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Category saved:', data);
-            closeCategoryModal();
-            await loadCategories();
-            notificationManager.success('تم حفظ الفئة بنجاح');
-            // Broadcast update via WebSocket
-            if (window.ws && window.ws.readyState === WebSocket.OPEN) {
-                window.ws.send(JSON.stringify({ type: 'categories_updated' }));
-            }
-        } else {
-            const error = await response.json();
-            console.error('Error response:', error);
-            notificationManager.error(error.detail || 'خطأ في حفظ الفئة');
+        if (currentCategoryId) {
+            payload.id = currentCategoryId;
         }
+
+        // Execute command via WebSocket
+        await executeCommand(commandType, payload);
+
+        closeCategoryModal();
+        await loadCategories();
+        notificationManager.success('تم حفظ الفئة بنجاح');
+
     } catch (error) {
         console.error('Error saving category:', error);
-        notificationManager.error('خطأ في حفظ الفئة: ' + error.message);
+        // Error already shown by executeCommand
     }
 }
 

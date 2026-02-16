@@ -43,24 +43,63 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Start Sync Agent
+# Start Sync Agent and WebSocket Client
 @app.on_event("startup")
 async def startup_event():
+    # Start Sync Agent
     try:
         from sync_agent import sync_agent
         sync_agent.start()
         print("[INFO] SyncAgent started successfully")
     except Exception as e:
         print(f"[ERROR] Failed to start SyncAgent: {e}")
+    
+    # Start WebSocket Client for Cloud Control
+    try:
+        import asyncio
+        from cloud_ws_client import CloudWebSocketClient
+        from command_handlers import COMMAND_HANDLERS
+        import os
+        
+        # Get cloud URL from environment or use default
+        cloud_url = os.environ.get("CLOUD_WS_URL", "wss://suzz-cloud.onrender.com")
+        
+        # Create and configure client
+        ws_client = CloudWebSocketClient(cloud_url)
+        
+        # Register all command handlers
+        for command_type, handler in COMMAND_HANDLERS.items():
+            ws_client.register_command_handler(command_type, handler)
+        
+        # Start client in background task
+        asyncio.create_task(ws_client.run())
+        
+        # Store globally for shutdown
+        app.state.ws_client = ws_client
+        
+        print(f"[INFO] WebSocket Client connecting to {cloud_url}")
+    except Exception as e:
+        print(f"[ERROR] Failed to start WebSocket Client: {e}")
+        import traceback
+        traceback.print_exc()
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    # Stop Sync Agent
     try:
         from sync_agent import sync_agent
         sync_agent.stop()
         print("[INFO] SyncAgent stopped successfully")
     except Exception as e:
         print(f"[ERROR] Failed to stop SyncAgent: {e}")
+    
+    # Stop WebSocket Client
+    try:
+        if hasattr(app.state, 'ws_client'):
+            app.state.ws_client.stop()
+            print("[INFO] WebSocket Client stopped successfully")
+    except Exception as e:
+        print(f"[ERROR] Failed to stop WebSocket Client: {e}")
 
 # Block any PDF download attempts - FORCE BLOCK - NO PDF FILES ALLOWED
 @app.middleware("http")

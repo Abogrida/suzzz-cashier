@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Header, Depends, Request
+from fastapi import FastAPI, HTTPException, Header, Depends, Request, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from dotenv import load_dotenv
 import datetime
+from websocket_manager import connection_manager
 
 # Load secret from .env if it exists
 load_dotenv()
@@ -306,17 +307,36 @@ def get_printers_list():
     """Return empty printers list - cloud view doesn't manage printers"""
     return {"printers": []}
 
-# WebSocket stub (cloud doesn't need real-time updates)
+# WebSocket Control Endpoint for Local System
+@app.websocket("/ws/control")
+async def websocket_control_endpoint(websocket: WebSocket, local_system_id: str = "default"):
+    """WebSocket endpoint for Local System to connect and receive commands"""
+    await connection_manager.connect(websocket, local_system_id)
+    
+    try:
+        while True:
+            # Receive messages from Local System
+            message = await websocket.receive_text()
+            await connection_manager.handle_message(local_system_id, message)
+            
+    except WebSocketDisconnect:
+        connection_manager.disconnect(local_system_id)
+        print(f"[WebSocket] Local System {local_system_id} disconnected")
+    except Exception as e:
+        print(f"[WebSocket] Error: {e}")
+        connection_manager.disconnect(local_system_id)
+
+# Legacy WebSocket stub (for admin.js compatibility)
 @app.websocket("/ws")
-async def websocket_endpoint(websocket):
+async def websocket_endpoint(websocket: WebSocket):
     """Stub WebSocket endpoint to prevent errors"""
     await websocket.accept()
-    # Just keep connection open but don't send anything
     try:
         while True:
             await websocket.receive_text()
     except:
         pass
+
 
 
 # --- Reports APIs (Mock/Simple) ---
@@ -511,6 +531,49 @@ def get_settings(db: Session = Depends(get_db)):
 @app.get("/api/settings/discount_permission")
 def get_discount_permission():
     return {"has_discount_permission": False}
+
+# --- Command APIs (Cloud Admin → Local System via WebSocket) ---
+
+@app.post("/api/command/execute")
+async def execute_command(command: dict, local_system_id: str = "default"):
+    """
+    Execute a command on Local System via WebSocket
+    
+    Expected command format:
+    {
+        "type": "add_product|edit_product|delete_product|...",
+        "payload": {...}
+    }
+    """
+    try:
+        # Check if Local System is online
+        if not connection_manager.is_online(local_system_id):
+            raise HTTPException(status_code=503, detail="Local System is offline. Cannot execute command.")
+        
+        # Send command and wait for response
+        response = await connection_manager.send_command(local_system_id, command)
+        
+        # Check response status
+        if response.get("status") == "error":
+            raise HTTPException(status_code=400, detail=response.get("error", "Command failed"))
+        
+        return response
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/connection/status")
+async def get_connection_status(local_system_id: str = "default"):
+    """Get connection status of Local System"""
+    status = connection_manager.get_status()
+    is_online = connection_manager.is_online(local_system_id)
+    
+    return {
+        "online": is_online,
+        "local_system_id": local_system_id,
+        "status": status
+    }
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=10000)

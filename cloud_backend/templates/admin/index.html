@@ -1477,48 +1477,7 @@
             }
         </script>
 
-        <!-- Cloud Mode: Hide Write Operations -->
-        <script>
-            if (window.IS_CLOUD_VIEW) {
-                document.addEventListener('DOMContentLoaded', () => {
-                    // Hide add buttons
-                    const addButtons = ['addCategoryBtn', 'addProductBtn', 'saveSettingsBtn', 'saveShiftSettingsBtn', 'saveReceiptSettingsBtn'];
-                    addButtons.forEach(id => {
-                        const btn = document.getElementById(id);
-                        if (btn) btn.style.display = 'none';
-                    });
 
-                    // Override write functions
-                    const writeFunctions = [
-                        'saveCategory', 'deleteCategory', 'editCategory',
-                        'saveProduct', 'deleteProduct', 'editProduct', 'toggleProduct',
-                        'saveSettings', 'saveShiftSettings', 'saveReceiptSettings',
-                        'handleRestoreMenu', 'handleRestoreFull', 'uploadLogo'
-                    ];
-
-                    writeFunctions.forEach(funcName => {
-                        if (window[funcName]) {
-                            window[funcName] = function() {
-                                showNotification('هذه الميزة غير متاحة في وضع العرض السحابي', 'info');
-                                return false;
-                            };
-                        }
-                    });
-
-                    document.body.classList.add('cloud-view');
-                    console.log('[Cloud Mode] Write operations disabled');
-                });
-            }
-        </script>
-
-        <!-- Cloud Mode CSS -->
-        <style>
-            .cloud-view .category-card button,
-            .cloud-view .product-card button {
-                display: none !important;
-            }
-        </style>
-
-    </body>
+</body>
 
 </html>
