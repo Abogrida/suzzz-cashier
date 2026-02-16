@@ -164,9 +164,9 @@ def get_statistics(db: Session = Depends(get_db)):
             "total_revenue": total_revenue,
             "total_orders": total_count
         },
-        "pending_orders": 0,
-        "total_products": 0,
-        "total_categories": 0,
+        "pending_orders": len([o for o in all_orders if o.status == 'pending']),
+        "total_products": db.query(SyncProduct).count(),
+        "total_categories": db.query(SyncCategory).count(),
         "recent_orders": [
             {
                 "order_number": o.order_number,
@@ -180,12 +180,32 @@ def get_statistics(db: Session = Depends(get_db)):
     }
 
 @app.get("/api/categories")
-def get_categories():
-    return []
+def get_categories(db: Session = Depends(get_db)):
+    categories = db.query(SyncCategory).all()
+    return [
+        {
+            "id": c.local_id,
+            "name": c.name,
+            "created_at": c.raw_data.get('created_at') if c.raw_data else None,
+            "updated_at": c.raw_data.get('updated_at') if c.raw_data else None
+        } for c in categories
+    ]
 
 @app.get("/api/products")
-def get_products():
-    return []
+def get_products(db: Session = Depends(get_db)):
+    products = db.query(SyncProduct).all()
+    return [
+        {
+            "id": p.local_id,
+            "name": p.name,
+            "price": p.price,
+            "category_id": p.category_id,
+            "enabled": p.raw_data.get('enabled', 1) if p.raw_data else 1,
+            "sizes": p.raw_data.get('sizes') if p.raw_data else None,
+            "created_at": p.raw_data.get('created_at') if p.raw_data else None,
+            "updated_at": p.raw_data.get('updated_at') if p.raw_data else None
+        } for p in products
+    ]
 
 @app.get("/api/orders")
 def get_orders(limit: int = 50, db: Session = Depends(get_db)):
@@ -209,6 +229,23 @@ def get_orders(limit: int = 50, db: Session = Depends(get_db)):
             "created_at": o.created_at,
             "items": o.raw_data.get('items', []) if o.raw_data else []
         } for o in orders[:limit]
+    ]
+
+@app.get("/api/shifts")
+def get_shifts(db: Session = Depends(get_db)):
+    shifts = db.query(SyncShift).all()
+    shifts_sorted = sorted(shifts, key=lambda x: x.opened_at or "", reverse=True)
+    return [
+        {
+            "id": s.local_id,
+            "shift_name": s.shift_name,
+            "total_revenue": s.total_revenue,
+            "opened_at": s.opened_at,
+            "closed_at": s.closed_at,
+            "opened_by": s.raw_data.get('opened_by') if s.raw_data else None,
+            "closed_by": s.raw_data.get('closed_by') if s.raw_data else None,
+            "initial_cash": s.raw_data.get('initial_cash', 0) if s.raw_data else 0
+        } for s in shifts_sorted
     ]
 
 # --- Reports APIs (Mock/Simple) ---
