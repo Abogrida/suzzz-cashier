@@ -248,6 +248,60 @@ def get_shifts(db: Session = Depends(get_db)):
         } for s in shifts_sorted
     ]
 
+# Get active shift (stub - cloud doesn't manage shifts directly)
+@app.get("/api/shift/active")
+def get_active_shift(db: Session = Depends(get_db)):
+    """Return the most recent shift as 'active' for cloud view"""
+    shifts = db.query(SyncShift).order_by(SyncShift.opened_at.desc()).all()
+    if not shifts:
+        return {"shift": None, "status": "No shifts synced yet"}
+    
+    latest_shift = shifts[0]
+    return {
+        "shift": {
+            "id": latest_shift.local_id,
+            "shift_name": latest_shift.shift_name,
+            "opened_at": latest_shift.opened_at,
+            "closed_at": latest_shift.closed_at,
+            "total_revenue": latest_shift.total_revenue or 0,
+            "opened_by": latest_shift.raw_data.get('opened_by') if latest_shift.raw_data else "N/A",
+            "is_open": latest_shift.closed_at is None
+        },
+        "status": "open" if latest_shift.closed_at is None else "closed"
+    }
+
+# Get shift details
+@app.get("/api/shift/{shift_id}")
+def get_shift_details(shift_id: int, db: Session = Depends(get_db)):
+    """Get detailed shift information"""
+    shift = db.query(SyncShift).filter(SyncShift.local_id == shift_id).first()
+    if not shift:
+        raise HTTPException(status_code=404, detail="Shift not found")
+    
+    # Get orders for this shift
+    orders = db.query(SyncOrder).filter(SyncOrder.shift_id == shift_id).all()
+    
+    return {
+        "id": shift.local_id,
+        "shift_name": shift.shift_name,
+        "opened_at": shift.opened_at,
+        "closed_at": shift.closed_at,
+        "opened_by": shift.raw_data.get('opened_by') if shift.raw_data else "N/A",
+        "closed_by": shift.raw_data.get('closed_by') if shift.raw_data else "N/A",
+        "initial_cash": shift.raw_data.get('initial_cash', 0) if shift.raw_data else 0,
+        "total_revenue": shift.total_revenue or 0,
+        "is_open": shift.closed_at is None,
+        "orders_count": len(orders),
+        "orders": [{"id": o.local_id, "total": o.total_amount, "created_at": o.created_at} for o in orders[:50]]
+    }
+
+# Get printers (stub - cloud doesn't have printers)
+@app.get("/api/printers")
+def get_printers():
+    """Return empty printers list - cloud view doesn't manage printers"""
+    return []
+
+
 # --- Reports APIs (Mock/Simple) ---
 
 @app.get("/api/reports/daily")
@@ -261,7 +315,20 @@ def get_daily_report(report_date: str = None, db: Session = Depends(get_db)):
     total_sales = sum(float(o.total_amount or 0) for o in orders if o.status != 'cancelled')
     order_count = len(orders)
     
-    # Best sellers would require parsing item JSON, skipping for now
+    return {
+        "date": report_date,
+        "total_sales": total_sales,
+        "order_count": order_count,
+        "orders": [{
+            "id": o.local_id,
+            "order_number": o.order_number,
+            "total_amount": o.total_amount,
+            "status": o.status,
+            "created_at": o.created_at,
+            "items": o.raw_data.get('items', []) if o.raw_data else []
+        } for o in orders]
+    }
+
     
 @app.post("/api/sync/heartbeat")
 def sync_heartbeat(db: Session = Depends(get_db)):
