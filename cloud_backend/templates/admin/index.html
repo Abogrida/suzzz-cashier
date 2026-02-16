@@ -9,6 +9,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="/static/css/tailwind.js"></script>
 
+    <!-- Cloud Mode Marker - Used by admin.js to disable write operations -->
+    <script>
+        window.IS_CLOUD_VIEW = true;
+        window.CLOUD_MODE = true;
+        console.log('[Cloud Admin] Running in read-only cloud mode');
+    </script>
+
     <!-- Cloud View Auto-Auth -->
     <script>
         // Automatically authenticate for the read-only cloud view
@@ -1169,21 +1176,6 @@
             </div>
         </div>
 
-        <!-- Shift Details Modal -->
-        <div id="shiftDetailsModal"
-            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-            <div class="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold text-gray-800">تفاصيل الشيفت</h2>
-                    <button onclick="closeShiftDetailsModal()"
-                        class="text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
-                </div>
-                <div id="shiftDetailsContent">
-                    <!-- Content will be loaded here -->
-                </div>
-            </div>
-        </div>
-
         <!-- Order Details Modal -->
         <div id="orderDetailsModal"
             class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
@@ -1201,7 +1193,7 @@
 
         <script src="/static/js/performance.js"></script>
         <script src="/static/js/notifications.js"></script>
-        <script src="/static/js/cloud_admin.js"></script>
+        <script src="/static/js/admin.js?v=5"></script>
         <script>
             // Receipt Settings Logic
             document.addEventListener('DOMContentLoaded', () => {
@@ -1484,6 +1476,49 @@
                 }
             }
         </script>
-</body>
+
+        <!-- Cloud Mode: Hide Write Operations -->
+        <script>
+            if (window.IS_CLOUD_VIEW) {
+                document.addEventListener('DOMContentLoaded', () => {
+                    // Hide add buttons
+                    const addButtons = ['addCategoryBtn', 'addProductBtn', 'saveSettingsBtn', 'saveShiftSettingsBtn', 'saveReceiptSettingsBtn'];
+                    addButtons.forEach(id => {
+                        const btn = document.getElementById(id);
+                        if (btn) btn.style.display = 'none';
+                    });
+
+                    // Override write functions
+                    const writeFunctions = [
+                        'saveCategory', 'deleteCategory', 'editCategory',
+                        'saveProduct', 'deleteProduct', 'editProduct', 'toggleProduct',
+                        'saveSettings', 'saveShiftSettings', 'saveReceiptSettings',
+                        'handleRestoreMenu', 'handleRestoreFull', 'uploadLogo'
+                    ];
+
+                    writeFunctions.forEach(funcName => {
+                        if (window[funcName]) {
+                            window[funcName] = function() {
+                                showNotification('هذه الميزة غير متاحة في وضع العرض السحابي', 'info');
+                                return false;
+                            };
+                        }
+                    });
+
+                    document.body.classList.add('cloud-view');
+                    console.log('[Cloud Mode] Write operations disabled');
+                });
+            }
+        </script>
+
+        <!-- Cloud Mode CSS -->
+        <style>
+            .cloud-view .category-card button,
+            .cloud-view .product-card button {
+                display: none !important;
+            }
+        </style>
+
+    </body>
 
 </html>

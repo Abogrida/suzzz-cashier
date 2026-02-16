@@ -7,6 +7,23 @@ let products = [];
 let productSearchQuery = '';
 let isImageDeleted = false;
 
+// Cloud Mode Detection
+const IS_CLOUD = window.IS_CLOUD_VIEW || window.CLOUD_MODE || false;
+if (IS_CLOUD) {
+    console.log('[Admin.js] Running in CLOUD MODE - write operations disabled');
+}
+
+// Helper: Check if feature is allowed in cloud mode
+function isCloudReadOnly() {
+    return IS_CLOUD;
+}
+
+// Helper: Show cloud-only message
+function showCloudMessage(message = 'هذه الميزة غير متاحة في وضع العرض السحابي') {
+    showNotification(message, 'info');
+}
+
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
